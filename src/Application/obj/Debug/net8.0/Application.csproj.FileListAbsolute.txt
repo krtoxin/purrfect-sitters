@@ -1,0 +1,12 @@
+/workspaces/purrfect-sitters/src/Application/bin/Debug/net8.0/Application.deps.json
+/workspaces/purrfect-sitters/src/Application/bin/Debug/net8.0/Application.dll
+/workspaces/purrfect-sitters/src/Application/bin/Debug/net8.0/Application.pdb
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/Application.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/Application.AssemblyInfoInputs.cache
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/Application.AssemblyInfo.cs
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/Application.csproj.CoreCompileInputs.cache
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/Application.sourcelink.json
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/Application.dll
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/refint/Application.dll
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/Application.pdb
+/workspaces/purrfect-sitters/src/Application/obj/Debug/net8.0/ref/Application.dll
