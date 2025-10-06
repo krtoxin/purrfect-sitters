@@ -17,7 +17,7 @@ public class User : AggregateRoot
         IsActive = true;
     }
 
-    public Email Email { get; private set; }
+    public Email Email { get; private set; } = default!; 
     public string Name { get; private set; } = default!;
     public UserRole Roles { get; private set; }
     public bool IsActive { get; private set; }

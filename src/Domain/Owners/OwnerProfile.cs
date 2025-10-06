@@ -6,6 +6,7 @@ namespace Domain.Owners;
 public class OwnerProfile : AggregateRoot
 {
     private readonly List<EmergencyContact> _emergencyContacts = new();
+    
     private OwnerProfile() { }
 
     private OwnerProfile(Guid id, Guid userId, string? defaultNotes, Address? address, string? timezone)

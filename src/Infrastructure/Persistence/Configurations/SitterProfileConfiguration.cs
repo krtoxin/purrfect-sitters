@@ -47,16 +47,20 @@ public class SitterProfileConfiguration : IEntityTypeConfiguration<SitterProfile
             m.Property(p => p.Currency).HasColumnName("base_rate_currency").HasColumnType("varchar(3)");
         });
 
-        builder.OwnsMany(typeof(AvailabilitySlot), "_availability", b =>
+        builder.OwnsMany(x => x.Availability, b =>
         {
             b.ToTable("sitter_availability_slots");
             b.WithOwner().HasForeignKey("sitter_profile_id");
-            b.HasKey("Id").HasName("pk_sitter_availability_slots");
-            b.Property<Guid>("Id").HasColumnName("id");
-            b.Property<DateTime>("StartUtc").HasColumnName("start_utc").IsRequired();
-            b.Property<DateTime>("EndUtc").HasColumnName("end_utc").IsRequired();
-            b.Property<int>("Status").HasColumnName("status").IsRequired();
-            b.Property<DateTime>("CreatedAt").HasColumnName("created_at")
+            b.HasKey(x => x.Id).HasName("pk_sitter_availability_slots");
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.StartUtc).HasColumnName("start_utc").IsRequired();
+            b.Property(x => x.EndUtc).HasColumnName("end_utc").IsRequired();
+            b.Property(x => x.Status)
+                .HasColumnName("status")
+                .HasConversion<int>() 
+                .IsRequired();
+            b.Property(x => x.CreatedAt)
+                .HasColumnName("created_at")
                 .HasDefaultValueSql("timezone('utc', now())");
             b.HasIndex("sitter_profile_id").HasDatabaseName("ix_sitter_availability_slots_profile_id");
             b.HasIndex("StartUtc", "EndUtc").HasDatabaseName("ix_sitter_availability_slots_range");
