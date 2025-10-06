@@ -1,0 +1,25 @@
+using Application.Common.Interfaces;
+using MediatR;
+
+namespace Application.Bookings.Commands.CompleteBooking;
+
+public class CompleteBookingCommandHandler : IRequestHandler<CompleteBookingCommand>
+{
+    private readonly IBookingRepository _bookings;
+    private readonly IUnitOfWork _uow;
+
+    public CompleteBookingCommandHandler(IBookingRepository bookings, IUnitOfWork uow)
+    {
+        _bookings = bookings;
+        _uow = uow;
+    }
+
+    public async Task Handle(CompleteBookingCommand request, CancellationToken ct)
+    {
+        var booking = await _bookings.GetByIdAsync(request.BookingId, ct)
+            ?? throw new InvalidOperationException("Booking not found.");
+
+        booking.Complete();
+        await _uow.SaveChangesAsync(ct);
+    }
+}
