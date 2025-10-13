@@ -14,12 +14,13 @@ public class CancelBookingByOwnerCommandHandler : IRequestHandler<CancelBookingB
         _uow = uow;
     }
 
-    public async Task Handle(CancelBookingByOwnerCommand request, CancellationToken ct)
+    public async Task<Unit> Handle(CancelBookingByOwnerCommand request, CancellationToken ct)
     {
         var booking = await _bookings.GetByIdAsync(request.BookingId, ct)
             ?? throw new InvalidOperationException("Booking not found.");
 
         booking.CancelByOwner(request.Reason);
         await _uow.SaveChangesAsync(ct);
+        return Unit.Value;
     }
 }

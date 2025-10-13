@@ -11,6 +11,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IPetRepository, PetRepository>();
         services.AddScoped<ISitterProfileRepository, SitterProfileRepository>();
         services.AddScoped<IOwnerProfileRepository, OwnerProfileRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         return services;
     }

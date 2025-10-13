@@ -1,4 +1,5 @@
 using Infrastructure.Persistence;
+using Infrastructure.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,5 +10,6 @@ public static class ConfigureInfrastructureServices
     public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddPersistenceServices(configuration);
+        services.AddInfrastructure();
     }
 }

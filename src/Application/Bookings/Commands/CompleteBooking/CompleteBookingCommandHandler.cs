@@ -14,12 +14,13 @@ public class CompleteBookingCommandHandler : IRequestHandler<CompleteBookingComm
         _uow = uow;
     }
 
-    public async Task Handle(CompleteBookingCommand request, CancellationToken ct)
+    public async Task<Unit> Handle(CompleteBookingCommand request, CancellationToken ct)
     {
         var booking = await _bookings.GetByIdAsync(request.BookingId, ct)
             ?? throw new InvalidOperationException("Booking not found.");
 
         booking.Complete();
         await _uow.SaveChangesAsync(ct);
+        return Unit.Value;
     }
 }
