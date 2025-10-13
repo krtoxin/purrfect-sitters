@@ -46,18 +46,6 @@ public class OwnerProfileConfiguration : IEntityTypeConfiguration<OwnerProfile>
             a.Property(p => p.Country).HasColumnName("address_country").HasColumnType("varchar(80)");
         });
 
-        builder.OwnsMany(x => x.EmergencyContacts, b =>
-        {
-            b.ToTable("owner_emergency_contacts");
-            b.WithOwner().HasForeignKey("owner_profile_id");
-            b.HasKey(x => x.Id).HasName("pk_owner_emergency_contacts");
-            b.Property(x => x.Id).HasColumnName("id");
-            b.Property(x => x.Name).HasColumnName("name").HasColumnType("varchar(150)").IsRequired();
-            b.Property(x => x.Phone).HasColumnName("phone").HasColumnType("varchar(60)").IsRequired();
-            b.Property(x => x.CreatedAt).HasColumnName("created_at")
-                .HasDefaultValueSql("timezone('utc', now())");
-            b.HasIndex("owner_profile_id").HasDatabaseName("ix_owner_emergency_contacts_owner_profile_id");
-        });
 
         builder.HasIndex(x => x.UserId).HasDatabaseName("ix_owner_profiles_user_id");
         builder.HasIndex(x => x.IsActive).HasDatabaseName("ix_owner_profiles_is_active");

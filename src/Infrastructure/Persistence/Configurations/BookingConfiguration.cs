@@ -78,29 +78,6 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
                 .HasColumnType("varchar(3)");
         });
 
-        builder.OwnsMany(x => x.StatusHistory, b =>
-        {
-            b.ToTable("booking_status_history");
-            b.WithOwner().HasForeignKey("booking_id");
-            b.HasKey(x => x.Id).HasName("pk_booking_status_history");
-            b.Property(x => x.Id).HasColumnName("id");
-            b.Property(x => x.Status)
-                .HasColumnName("status")
-                .HasConversion<int>(); 
-            b.Property(x => x.ChangedAtUtc).HasColumnName("changed_at_utc");
-            b.HasIndex("booking_id").HasDatabaseName("ix_booking_status_history_booking_id");
-        });
-
-        builder.OwnsMany(x => x.CareInstructionSnapshots, b =>
-        {
-            b.ToTable("booking_care_instruction_snapshots");
-            b.WithOwner().HasForeignKey("booking_id");
-            b.HasKey(x => x.Id).HasName("pk_booking_care_instruction_snapshots");
-            b.Property(x => x.Id).HasColumnName("id");
-            b.Property(x => x.Text).HasColumnName("text").HasColumnType("varchar(400)").IsRequired();
-            b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("timezone('utc', now())");
-            b.HasIndex("booking_id").HasDatabaseName("ix_booking_care_instruction_snapshots_booking_id");
-        });
 
         builder.HasIndex(x => x.PetId).HasDatabaseName("ix_bookings_pet_id");
         builder.HasIndex(x => x.Status).HasDatabaseName("ix_bookings_status");

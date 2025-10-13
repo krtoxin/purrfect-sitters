@@ -10,8 +10,8 @@ public static class ConfigurePersistenceServices
 {
     public static void AddPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var cs = configuration.GetConnectionString("Default")
-                 ?? throw new InvalidOperationException("Connection string 'Default' not found.");
+        var cs = configuration.GetConnectionString("DefaultConnection")
+                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
         dataSourceBuilder.EnableDynamicJson();
