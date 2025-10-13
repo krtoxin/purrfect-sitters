@@ -1,5 +1,4 @@
-using Api.Contracts.Sitters.Requests;
-using Api.Contracts.Sitters.Responses;
+using Api.DTOs;
 using Api.Mappings;
 using Application.Sitters.Commands.CreateSitterProfile;
 using Application.Sitters.Queries.GetSitterById;
@@ -20,33 +19,62 @@ public class SittersController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] CreateSitterProfileRequest request, CancellationToken ct)
+    public async Task<IActionResult> Create([FromBody] CreateSitterDto request, CancellationToken ct)
     {
         var id = await _mediator.Send(new CreateSitterProfileCommand(
             request.UserId,
             request.Bio,
-            request.BaseRateAmount,
-            request.BaseRateCurrency,
-            request.ServicesOffered), ct);
+            request.BaseRateAmount ?? 0,
+            request.BaseRateCurrency ?? "USD",
+            new[] { request.ServicesOffered }), ct);
 
         return CreatedAtAction(nameof(GetById), new { id }, new { id });
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(SitterProfileResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SitterDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var model = await _mediator.Send(new GetSitterByIdQuery(id), ct);
         if (model is null) return NotFound();
-        return Ok(model.ToResponse());
+        
+        var sitterDto = new SitterDto
+        {
+            Id = model.Id,
+            UserId = model.UserId,
+            Bio = model.Bio,
+            IsActive = model.IsActive,
+            AverageRating = model.AverageRating,
+            BaseRateAmount = model.BaseRateAmount,
+            BaseRateCurrency = model.BaseRateCurrency,
+            ServicesOffered = string.Join(",", model.ServicesOffered.Select(s => s.ToString())),
+            CompletedBookings = model.CompletedBookings,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt
+        };
+        return Ok(sitterDto);
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<SitterProfileResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<SitterDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
     {
         var sitters = await _mediator.Send(new ListSittersQuery(page, pageSize), ct);
-        return Ok(sitters.Select(s => s.ToResponse()));
+        var sitterDtos = sitters.Items.Select(s => new SitterDto
+        {
+            Id = s.Id,
+            UserId = s.UserId,
+            Bio = s.Bio,
+            IsActive = s.IsActive,
+            AverageRating = s.AverageRating,
+            BaseRateAmount = s.BaseRateAmount,
+            BaseRateCurrency = s.BaseRateCurrency,
+            ServicesOffered = string.Join(",", s.ServicesOffered.Select(sv => sv.ToString())),
+            CompletedBookings = s.CompletedBookings,
+            CreatedAt = s.CreatedAt,
+            UpdatedAt = s.UpdatedAt
+        });
+        return Ok(sitterDtos);
     }
 }

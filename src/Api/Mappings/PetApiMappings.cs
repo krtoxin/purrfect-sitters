@@ -6,5 +6,5 @@ namespace Api.Mappings;
 public static class PetApiMappings
 {
     public static PetResponse ToResponse(this PetReadModel model)
-        => new(model.Id, model.OwnerId, model.Name, model.Type, model.Breed, model.Notes, model.CreatedAt);
+        => new(model.Id, model.OwnerId, model.Name, model.TypeString, model.Breed, model.Notes, model.CreatedAt);
 }

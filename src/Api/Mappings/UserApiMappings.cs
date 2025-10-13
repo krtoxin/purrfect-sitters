@@ -6,5 +6,5 @@ namespace Api.Mappings;
 public static class UserApiMappings
 {
     public static UserResponse ToResponse(this UserReadModel model)
-        => new(model.Id, model.Email, model.Name, (int)model.Roles, model.IsActive, model.CreatedAt);
+        => new(model.Id, model.Email, model.Name, model.RolesInt, model.IsActive, model.CreatedAt);
 }
