@@ -2,6 +2,7 @@ using Api.DTOs;
 using Api.Mappings;
 using Application.Users.Commands.CreateUser;
 using Application.Users.Queries.GetUserById;
+using Application.Users.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,5 +47,23 @@ public class UsersController : ControllerBase
             UpdatedAt = model.UpdatedAt
         };
         return Ok(userDto);
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var users = await _mediator.Send(new ListAllUsersQuery(), ct);
+        var userDtos = users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            Email = u.Email.ToString(),
+            Name = u.Name,
+            Roles = u.Roles.ToString(),
+            IsActive = u.IsActive,
+            CreatedAt = u.CreatedAt,
+            UpdatedAt = u.UpdatedAt
+        });
+        return Ok(userDtos);
     }
 }

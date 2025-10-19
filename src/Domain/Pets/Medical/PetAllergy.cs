@@ -22,6 +22,7 @@ public class PetAllergy
     }
 
     public Guid Id { get; private set; }
+    public Guid PetId { get; private set; }
     public string Name { get; private set; } = default!;
     public AllergySeverity Severity { get; private set; }
     public string? Notes { get; private set; }

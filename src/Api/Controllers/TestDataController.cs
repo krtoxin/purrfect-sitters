@@ -37,21 +37,18 @@ public class TestDataController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> SeedTestData(CancellationToken ct)
     {
-        // Create test users
         var owner = Domain.Users.User.Register(Guid.NewGuid(), Email.Create("owner@test.com"), "John Owner", UserRole.Owner);
         var sitter = Domain.Users.User.Register(Guid.NewGuid(), Email.Create("sitter@test.com"), "Jane Sitter", UserRole.Sitter);
         
         await _users.AddAsync(owner, ct);
         await _users.AddAsync(sitter, ct);
 
-        // Create test pet
         var pet = Pet.Create(Guid.NewGuid(), owner.Id, "Buddy", PetType.Dog, "Golden Retriever", "Very friendly dog");
         pet.AddInstruction("Feed twice daily");
         pet.AddInstruction("Walk for 30 minutes");
         
         await _pets.AddAsync(pet, ct);
 
-        // Create test sitter profile
         var sitterProfile = SitterProfile.Create(
             Guid.NewGuid(), 
             sitter.Id, 
@@ -61,7 +58,6 @@ public class TestDataController : ControllerBase
         
         await _sitters.AddAsync(sitterProfile, ct);
 
-        // Create test booking
         var price = BookingPrice.Create(100m, 10m, "USD");
         var booking = Booking.Create(
             Guid.NewGuid(),

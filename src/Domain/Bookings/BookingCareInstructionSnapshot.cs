@@ -12,6 +12,7 @@ public class BookingCareInstructionSnapshot
     }
 
     public Guid Id { get; private set; }
+    public Guid BookingId { get; private set; }
     public string Text { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; }
 

@@ -19,6 +19,7 @@ public class AvailabilitySlot
     }
 
     public Guid Id { get; private set; }
+    public Guid SitterProfileId { get; private set; }
     public DateTime StartUtc { get; private set; }
     public DateTime EndUtc { get; private set; }
     public AvailabilityStatus Status { get; private set; }

@@ -20,10 +20,10 @@ public class BookingCareInstructionSnapshotConfiguration : IEntityTypeConfigurat
             .HasColumnName("created_at")
             .HasDefaultValueSql("timezone('utc', now())");
         
-        builder.Property("BookingId")
+        builder.Property(x => x.BookingId)
             .HasColumnName("booking_id")
             .IsRequired();
         
-        builder.HasIndex("booking_id").HasDatabaseName("ix_booking_care_instruction_snapshots_booking_id");
+        builder.HasIndex(x => x.BookingId).HasDatabaseName("ix_booking_care_instruction_snapshots_booking_id");
     }
 }

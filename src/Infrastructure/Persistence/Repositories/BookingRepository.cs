@@ -57,4 +57,7 @@ public class BookingRepository : IBookingRepository
 
         return (items, total);
     }
+
+    public async Task<IReadOnlyList<Booking>> GetAllAsync(CancellationToken ct = default) =>
+        await _db.Bookings.AsNoTracking().ToListAsync(ct);
 }

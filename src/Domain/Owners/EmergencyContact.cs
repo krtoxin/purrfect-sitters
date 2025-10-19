@@ -13,6 +13,7 @@ public class EmergencyContact
     }
 
     public Guid Id { get; private set; }
+    public Guid OwnerProfileId { get; private set; }
     public string Name { get; private set; } = default!;
     public string Phone { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; }

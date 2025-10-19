@@ -20,10 +20,10 @@ public class PetInstructionConfiguration : IEntityTypeConfiguration<CareInstruct
             .HasColumnName("created_at")
             .HasDefaultValueSql("timezone('utc', now())");
         
-        builder.Property("PetId")
+        builder.Property(x => x.PetId)
             .HasColumnName("pet_id")
             .IsRequired();
         
-        builder.HasIndex("pet_id").HasDatabaseName("ix_pet_instructions_pet_id");
+        builder.HasIndex(x => x.PetId).HasDatabaseName("ix_pet_instructions_pet_id");
     }
 }

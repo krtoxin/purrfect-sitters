@@ -14,6 +14,7 @@ public class PetVaccination
     }
 
     public Guid Id { get; private set; }
+    public Guid PetId { get; private set; }
     public string VaccineName { get; private set; } = default!;
     public DateTime AdministeredOnUtc { get; private set; }
     public DateTime? ExpiresOnUtc { get; private set; }

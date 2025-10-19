@@ -26,11 +26,11 @@ public class SitterAvailabilitySlotConfiguration : IEntityTypeConfiguration<Avai
             .HasColumnName("created_at")
             .HasDefaultValueSql("timezone('utc', now())");
         
-        builder.Property("SitterProfileId")
+        builder.Property(x => x.SitterProfileId)
             .HasColumnName("sitter_profile_id")
             .IsRequired();
         
-        builder.HasIndex("sitter_profile_id").HasDatabaseName("ix_sitter_availability_slots_profile_id");
+        builder.HasIndex(x => x.SitterProfileId).HasDatabaseName("ix_sitter_availability_slots_profile_id");
         builder.HasIndex("StartUtc", "EndUtc").HasDatabaseName("ix_sitter_availability_slots_range");
     }
 }

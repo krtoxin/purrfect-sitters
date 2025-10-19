@@ -17,10 +17,10 @@ public class BookingStatusHistoryConfiguration : IEntityTypeConfiguration<Bookin
             .HasConversion<int>();
         builder.Property(x => x.ChangedAtUtc).HasColumnName("changed_at_utc");
         
-        builder.Property("BookingId")
+        builder.Property(x => x.BookingId)
             .HasColumnName("booking_id")
             .IsRequired();
         
-        builder.HasIndex("booking_id").HasDatabaseName("ix_booking_status_history_booking_id");
+        builder.HasIndex(x => x.BookingId).HasDatabaseName("ix_booking_status_history_booking_id");
     }
 }

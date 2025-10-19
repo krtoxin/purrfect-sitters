@@ -5,5 +5,5 @@ public record CreateSitterProfileRequest(
     string? Bio = null,
     decimal? BaseRateAmount = null,
     string? BaseRateCurrency = "USD",
-    int ServicesOffered = 1 // Default to basic pet sitting
+    int ServicesOffered = 1 // Default to DayVisit
 );

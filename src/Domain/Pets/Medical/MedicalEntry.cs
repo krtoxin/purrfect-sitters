@@ -13,6 +13,7 @@ public class MedicalEntry
     }
 
     public Guid Id { get; private set; }
+    public Guid PetId { get; private set; }
     public string Title { get; private set; } = default!;
     public string? Details { get; private set; }
     public DateTime CreatedAt { get; private set; }

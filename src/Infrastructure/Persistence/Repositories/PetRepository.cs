@@ -17,6 +17,9 @@ public class PetRepository : IPetRepository
     public Task<bool> ExistsAsync(Guid id, CancellationToken ct = default) =>
         _db.Pets.AnyAsync(p => p.Id == id, ct);
 
+    public async Task<IReadOnlyList<Pet>> GetAllAsync(CancellationToken ct = default) =>
+        await _db.Pets.AsNoTracking().ToListAsync(ct);
+
     public async Task<IReadOnlyList<Pet>> GetForOwnerAsync(Guid ownerId, CancellationToken ct = default) =>
         await _db.Pets
             .Where(p => p.OwnerId == ownerId)

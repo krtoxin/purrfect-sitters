@@ -1,6 +1,7 @@
 using Api.Contracts.Bookings.Requests;
 using Api.Contracts.Bookings.Responses;
 using Api.Contracts.Common;
+using Api.DTOs;
 using Api.Mappings;
 using Application.Bookings.Commands.AcceptBooking;
 using Application.Bookings.Commands.CancelByOwner;
@@ -10,6 +11,7 @@ using Application.Bookings.Commands.CreateBooking;
 using Application.Bookings.Models;
 using Application.Bookings.Queries.GetBookingById;
 using Application.Bookings.Queries.ListBookingsForOwner;
+using Application.Bookings.Queries;
 using Application.Common.Models;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -98,5 +100,28 @@ public class BookingsController : ControllerBase
     {
         await _mediator.Send(new CancelBookingBySitterCommand(id, body.Reason), ct);
         return NoContent();
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<BookingDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var bookings = await _mediator.Send(new ListAllBookingsQuery(), ct);
+        var bookingDtos = bookings.Select(b => new BookingDto
+        {
+            Id = b.Id,
+            PetId = b.PetId,
+            OwnerId = b.OwnerId,
+            SitterId = b.SitterProfileId,
+            StartDate = b.StartUtc,
+            EndDate = b.EndUtc,
+            Status = b.Status.ToString(),
+            TotalAmount = b.Price.TotalAmount,
+            ServiceFee = b.Price.ServiceFeeAmount,
+            Currency = b.Price.Currency,
+            ServiceType = b.ServiceType.ToString(),
+            CreatedAt = b.CreatedAt
+        });
+        return Ok(bookingDtos);
     }
 }

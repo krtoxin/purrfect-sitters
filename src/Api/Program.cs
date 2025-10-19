@@ -4,7 +4,6 @@ using Infrastructure;
 using Api.Setup;
 using DotNetEnv;
 
-// Load .env file
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);

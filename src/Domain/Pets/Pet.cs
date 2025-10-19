@@ -117,6 +117,7 @@ public class CareInstruction
     }
 
     public Guid Id { get; private set; }
+    public Guid PetId { get; private set; }
     public string Text { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; }
 

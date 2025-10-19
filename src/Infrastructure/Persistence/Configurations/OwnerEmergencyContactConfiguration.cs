@@ -24,10 +24,10 @@ public class OwnerEmergencyContactConfiguration : IEntityTypeConfiguration<Emerg
             .HasColumnName("created_at")
             .HasDefaultValueSql("timezone('utc', now())");
         
-        builder.Property("OwnerProfileId")
+        builder.Property(x => x.OwnerProfileId)
             .HasColumnName("owner_profile_id")
             .IsRequired();
         
-        builder.HasIndex("owner_profile_id").HasDatabaseName("ix_owner_emergency_contacts_owner_profile_id");
+        builder.HasIndex(x => x.OwnerProfileId).HasDatabaseName("ix_owner_emergency_contacts_owner_profile_id");
     }
 }

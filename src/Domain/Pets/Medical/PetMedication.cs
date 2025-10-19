@@ -16,6 +16,7 @@ public class PetMedication
     }
 
     public Guid Id { get; private set; }
+    public Guid PetId { get; private set; }
     public string Name { get; private set; } = default!;
     public string Dosage { get; private set; } = default!;
     public string Schedule { get; private set; } = default!;

@@ -8,7 +8,6 @@ namespace Api.Mappings;
 
 public static class DtoMappings
 {
-    // User mappings
     public static UserDto ToDto(this Domain.Users.User user)
     {
         return new UserDto
@@ -33,7 +32,6 @@ public static class DtoMappings
         );
     }
 
-    // Pet mappings
     public static PetDto ToDto(this Domain.Pets.Pet pet)
     {
         return new PetDto
@@ -45,7 +43,7 @@ public static class DtoMappings
             Breed = pet.Breed,
             Notes = pet.Notes,
             CreatedAt = pet.CreatedAt,
-            UpdatedAt = pet.CreatedAt // Pet doesn't have UpdatedAt, using CreatedAt
+            UpdatedAt = pet.CreatedAt 
         };
     }
 
@@ -61,7 +59,6 @@ public static class DtoMappings
         );
     }
 
-    // Sitter mappings
     public static SitterDto ToDto(this Domain.Sitters.SitterProfile sitter)
     {
         return new SitterDto
@@ -76,7 +73,7 @@ public static class DtoMappings
             ServicesOffered = sitter.ServicesOffered.ToString(),
             CompletedBookings = sitter.CompletedBookings,
             CreatedAt = sitter.CreatedAt,
-            UpdatedAt = sitter.CreatedAt // SitterProfile doesn't have UpdatedAt
+            UpdatedAt = sitter.CreatedAt 
         };
     }
 
@@ -96,7 +93,6 @@ public static class DtoMappings
         );
     }
 
-    // Booking mappings
     public static BookingDto ToDto(this Domain.Bookings.Booking booking)
     {
         return new BookingDto

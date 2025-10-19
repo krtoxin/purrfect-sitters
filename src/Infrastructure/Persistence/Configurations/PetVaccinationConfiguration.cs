@@ -25,10 +25,10 @@ public class PetVaccinationConfiguration : IEntityTypeConfiguration<PetVaccinati
             .HasColumnName("created_at")
             .HasDefaultValueSql("timezone('utc', now())");
         
-        builder.Property("PetId")
+        builder.Property(x => x.PetId)
             .HasColumnName("pet_id")
             .IsRequired();
         
-        builder.HasIndex("pet_id").HasDatabaseName("ix_pet_vaccinations_pet_id");
+        builder.HasIndex(x => x.PetId).HasDatabaseName("ix_pet_vaccinations_pet_id");
     }
 }

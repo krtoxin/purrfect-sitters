@@ -24,4 +24,7 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
         => await _context.Users.AnyAsync(u => u.Id == id, ct);
+
+    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct = default)
+        => await _context.Users.AsNoTracking().ToListAsync(ct);
 }

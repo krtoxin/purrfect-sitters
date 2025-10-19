@@ -12,6 +12,7 @@ public class BookingStatusHistory
     }
 
     public Guid Id { get; private set; }
+    public Guid BookingId { get; private set; }
     public BookingStatus Status { get; private set; }
     public DateTime ChangedAtUtc { get; private set; }
 

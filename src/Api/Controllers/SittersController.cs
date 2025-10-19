@@ -3,6 +3,7 @@ using Api.Mappings;
 using Application.Sitters.Commands.CreateSitterProfile;
 using Application.Sitters.Queries.GetSitterById;
 using Application.Sitters.Queries.ListSitters;
+using Application.Sitters.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -74,6 +75,27 @@ public class SittersController : ControllerBase
             CompletedBookings = s.CompletedBookings,
             CreatedAt = s.CreatedAt,
             UpdatedAt = s.UpdatedAt
+        });
+        return Ok(sitterDtos);
+    }
+
+    [HttpGet("all")]
+    [ProducesResponseType(typeof(IEnumerable<SitterDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var sitters = await _mediator.Send(new ListAllSittersQuery(), ct);
+        var sitterDtos = sitters.Select(s => new SitterDto
+        {
+            Id = s.Id,
+            UserId = s.UserId,
+            Bio = s.Bio,
+            IsActive = s.IsActive,
+            AverageRating = s.AverageRating,
+            BaseRateAmount = s.BaseRate?.Amount,
+            BaseRateCurrency = s.BaseRate?.Currency,
+            ServicesOffered = s.ServicesOffered.ToString(),
+            CompletedBookings = s.CompletedBookings,
+            CreatedAt = s.CreatedAt
         });
         return Ok(sitterDtos);
     }

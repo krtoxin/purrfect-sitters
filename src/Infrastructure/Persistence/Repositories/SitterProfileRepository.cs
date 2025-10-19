@@ -23,4 +23,7 @@ public class SitterProfileRepository : ISitterProfileRepository
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<SitterProfile>> GetAllAsync(CancellationToken ct = default) =>
+        await _db.SitterProfiles.AsNoTracking().ToListAsync(ct);
 }

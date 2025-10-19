@@ -3,6 +3,7 @@ using Api.Mappings;
 using Application.Pets.Commands.CreatePet;
 using Application.Pets.Queries.GetPetById;
 using Application.Pets.Queries.ListPetsForOwner;
+using Application.Pets.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,6 +32,24 @@ public class PetsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id }, new { id });
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<PetDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var pets = await _mediator.Send(new ListAllPetsQuery(), ct);
+        var petDtos = pets.Select(p => new PetDto
+        {
+            Id = p.Id,
+            OwnerId = p.OwnerId,
+            Name = p.Name,
+            Type = p.Type.ToString(),
+            Breed = p.Breed,
+            Notes = p.Notes,
+            CreatedAt = p.CreatedAt
+        });
+        return Ok(petDtos);
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(PetDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -44,11 +63,10 @@ public class PetsController : ControllerBase
             Id = model.Id,
             OwnerId = model.OwnerId,
             Name = model.Name,
-            Type = model.TypeString,
+            Type = model.Type.ToString(),
             Breed = model.Breed,
             Notes = model.Notes,
-            CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt
+            CreatedAt = model.CreatedAt
         };
         return Ok(petDto);
     }
@@ -63,11 +81,10 @@ public class PetsController : ControllerBase
             Id = p.Id,
             OwnerId = p.OwnerId,
             Name = p.Name,
-            Type = p.TypeString,
+            Type = p.Type.ToString(),
             Breed = p.Breed,
             Notes = p.Notes,
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt
+            CreatedAt = p.CreatedAt
         });
         return Ok(petDtos);
     }
