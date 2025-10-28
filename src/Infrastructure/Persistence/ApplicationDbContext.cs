@@ -15,6 +15,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SitterProfile> SitterProfiles { get; init; }
     public DbSet<Pet> Pets { get; init; }
     public DbSet<Booking> Bookings { get; init; }
+    public DbSet<Sitter> Sitters { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
