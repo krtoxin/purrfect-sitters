@@ -25,13 +25,20 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Start container now if not running
         if (!_dbContainer.State.Equals(DotNet.Testcontainers.Containers.TestcontainersStates.Running))
         {
             _dbContainer.StartAsync().GetAwaiter().GetResult();
         }
 
-        // Make sure the app uses the container connection string
+        builder.UseEnvironment("Development");
+
+        builder.ConfigureLogging((context, logging) =>
+        {
+            logging.ClearProviders();
+            logging.AddConsole();
+            logging.SetMinimumLevel(LogLevel.Debug);
+        });
+
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", _dbContainer.GetConnectionString());
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
 
@@ -51,8 +58,8 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
             services.AddSingleton<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
 
             var sp = services.BuildServiceProvider();
-            using var scope = sp.CreateScope();
 
+            using var scope = sp.CreateScope();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<IntegrationTestWebFactory>>();
             try
             {
@@ -87,9 +94,8 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
             }
             catch (Exception ex)
             {
-                var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-                var l = loggerFactory.CreateLogger("IntegrationTestWebFactory");
-                l.LogError(ex, "Failed to initialize test database during ConfigureTestServices");
+                var lf = sp.GetRequiredService<ILoggerFactory>();
+                lf.CreateLogger("IntegrationTestWebFactory").LogError(ex, "Failed to initialize test database during ConfigureTestServices");
                 throw;
             }
         });

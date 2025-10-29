@@ -33,7 +33,6 @@ public class CreateBookingCommandHandler : IRequestHandler<CreateBookingCommand,
 
         var serviceFeePercent = request.ServiceFeePercent ?? 0m;
 
-        // Pass the currency now (added).
         var price = BookingPrice.Create(
             request.BaseAmount,
             serviceFeePercent,

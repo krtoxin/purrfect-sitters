@@ -25,8 +25,8 @@ public class BookingsControllerTests : BaseIntegrationTest
         _emailService = factory.Services.GetRequiredService<IEmailSendingService>();
     }
 
-    [Fact]
-    public async Task Create_ValidBooking_ReturnsCreatedBooking()
+   [Fact]
+  public async Task Create_ValidBooking_ReturnsCreatedBooking()
     {
         var owner = UserData.CreateUser();
         var sitterUser = UserData.CreateUser(); 
@@ -39,21 +39,32 @@ public class BookingsControllerTests : BaseIntegrationTest
         Context.Pets.Add(pet);
         await SaveChangesAsync();
 
-        var request = new CreateBookingDto
+        var startUtc = DateTime.UtcNow.AddDays(1);
+        var endUtc = startUtc.AddHours(2);
+
+        var request = new
         {
             PetId = pet.Id,
-            OwnerId = owner.Id,
-            SitterId = sitterProfile.Id,
-            StartDate = DateTime.UtcNow.AddDays(1),
-            EndDate = DateTime.UtcNow.AddDays(1).AddHours(2),
-            TotalAmount = 50.00m,
-            ServiceFee = 5.00m,
+            SitterProfileId = sitterProfile.Id,   
+            StartUtc = startUtc,                 
+            EndUtc = endUtc,
+            BaseAmount = 50.00m,                  
+            ServiceFeePercent = 10.0m,
             Currency = "USD",
-            ServiceType = "DayVisit",
-            CareInstructions = "Please take good care of my pet"
+            CareInstructionTexts = new[] { "Please take good care of my pet" }
         };
 
         var response = await Client.PostAsJsonAsync("/api/bookings", request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("==== SERVER RESPONSE START ====");
+            Console.WriteLine($"Status: {(int)response.StatusCode} {response.ReasonPhrase}");
+            Console.WriteLine("Body:");
+            Console.WriteLine(string.IsNullOrWhiteSpace(body) ? "<empty>" : body);
+            Console.WriteLine("==== SERVER RESPONSE END ====");
+        }
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await response.Content.ReadFromJsonAsync<BookingDto>();
