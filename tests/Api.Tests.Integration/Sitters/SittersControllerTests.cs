@@ -70,20 +70,24 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
         var sitter = await Context.SitterProfiles.FirstAsync();
 
 
-        var servicesOffered = string.Join(",", sitter.ServicesOffered
-            .ToString()
-            .Split(", ", StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim()));
 
-        var request = new
+        var servicesOffered = sitter.ServicesOffered.ToString("F").Replace(" ", "");
+
+        var request = new Dictionary<string, object>
         {
-            Bio = "Updated bio",
-            BaseRateAmount = 60.0m,
-            BaseRateCurrency = "USD",
-            ServicesOffered = servicesOffered
+            ["Bio"] = "Updated bio",
+            ["BaseRateAmount"] = 60.0m,
+            ["BaseRateCurrency"] = "USD",
+            ["ServicesOffered"] = servicesOffered
         };
 
-        var response = await Client.PutAsJsonAsync($"{BaseRoute}/{sitter.Id}", request);
+        var json = System.Text.Json.JsonSerializer.Serialize(request);
+        Console.WriteLine("==== REQUEST JSON START ====");
+        Console.WriteLine(json);
+        Console.WriteLine("==== REQUEST JSON END ====");
+
+        var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var response = await Client.PutAsync($"{BaseRoute}/{sitter.Id}", content);
 
         if (!response.IsSuccessStatusCode)
         {

@@ -20,7 +20,6 @@ public class AcceptBookingCommandHandler : IRequestHandler<AcceptBookingCommand>
         var booking = await _bookings.GetByIdAsync(request.BookingId, ct)
             ?? throw new InvalidOperationException("Booking not found.");
 
-        // log rowversion values to help debug concurrency failures in tests
         try
         {
             var dbRv = booking.RowVersion ?? Array.Empty<byte>();
@@ -37,7 +36,7 @@ public class AcceptBookingCommandHandler : IRequestHandler<AcceptBookingCommand>
             throw new InvalidOperationException("Booking version mismatch (concurrency error).");
 
         booking.Accept();
-        await _bookings.UpdateAsync(booking, ct); // Ensure EF tracks the update for concurrency
+        await _bookings.UpdateAsync(booking, ct); 
         await _uow.SaveChangesAsync(ct);
         return Unit.Value;
     }

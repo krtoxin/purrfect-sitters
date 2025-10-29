@@ -66,8 +66,22 @@ public class BookingsControllerTests : BaseIntegrationTest
         var booking = await getResponse.Content.ReadFromJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
 
-        var acceptRequest = new { RowVersion = booking!.RowVersion };
-        var acceptResponse = await Client.PostAsJsonAsync($"/api/bookings/{bookingId}/accept", acceptRequest);
+
+        Console.WriteLine($"Booking status before accept: {booking!.Status}");
+        Console.WriteLine($"RowVersion before accept: {booking!.RowVersion}");
+        Console.WriteLine("==== BOOKING OBJECT START ====");
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(booking));
+        Console.WriteLine("==== BOOKING OBJECT END ====");
+        var acceptResponse = await Client.PostAsync($"/api/bookings/{bookingId}/accept", null);
+        if (acceptResponse.StatusCode != HttpStatusCode.NoContent)
+        {
+            var acceptBody = await acceptResponse.Content.ReadAsStringAsync();
+            Console.WriteLine("==== ACCEPT RESPONSE START ====");
+            Console.WriteLine($"Status: {(int)acceptResponse.StatusCode} {acceptResponse.ReasonPhrase}");
+            Console.WriteLine("Body:");
+            Console.WriteLine(string.IsNullOrWhiteSpace(acceptBody) ? "<empty>" : acceptBody);
+            Console.WriteLine("==== ACCEPT RESPONSE END ====");
+        }
         acceptResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var getResponse2 = await Client.GetAsync($"/api/bookings/{bookingId}");
