@@ -1,0 +1,114 @@
+###############################################
+# Purrfect Sitters (.NET 8 + EF Core + tooling)
+###############################################
+
+# Build artifacts
+bin/
+obj/
+out/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+*.iml
+
+# Logs / diagnostics
+logs/
+*.log
+*.etl
+*.nlog
+TestResult*/
+coverage/
+coverage-*/
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+# NuGet packages directory
+packages/
+# Except build props/targets inside packages if any
+!packages/**/*.props
+!packages/**/*.targets
+
+# Generated files
+Generated/
+Generated_Code/
+ServiceReferences/
+
+# EF Core (design-time bundles / migrations artifacts)
+migrations-bundle/
+# (Keep your Migrations folder – DO NOT ignore actual migration .cs files)
+*.dacpac
+
+# User secrets / sensitive config
+secrets.json
+appsettings.Local.json
+appsettings.Development.local.json
+
+# Environment variable files
+.env
+.env.*
+!.env.example
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tooling caches
+.nuget/
+.npm/
+node_modules/
+dist/
+tmp/
+temp/
+
+# JetBrains Rider
+*.sln.iml
+
+# ReSharper
+_ReSharper.Caches/
+*.DotSettings.user
+
+# Coverlet
+*.lcov
+
+# Sonar
+.sonar/
+.scannerwork/
+
+# Docker
+docker-compose.override.yml
+*.pid
+*.seed
+
+# Reports / artifacts
+reports/
+artifacts/
+
+# Security scans
+trivy-report.*
+dependency-check-report.*
+
+# Local database files (if you ever add SQLite for tests)
+*.db
+*.db-shm
+*.db-wal
+
+# Crash dumps
+*.dmp
+
+###############################################
+# Keep examples / templates
+###############################################
+!.env.example
