@@ -5,6 +5,11 @@ namespace Domain.Users;
 
 public class User : AggregateRoot
 {
+    public void Activate()
+    {
+        IsActive = true;
+        UpdatedAt = DateTime.UtcNow;
+    }
     private User() { }
 
     private User(Guid id, Email email, string name, UserRole roles)

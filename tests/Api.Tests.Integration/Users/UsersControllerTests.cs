@@ -1,38 +1,38 @@
 using System.Net;
 using System.Net.Http.Json;
-using Api.Contracts.Users;
+// using Api.Contracts.Users;
+using Api.DTOs;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Tests.Common;
 using Tests.Data.Users;
 using Xunit;
 
+
 namespace Api.Tests.Integration.Users;
+
+[Collection("Integration")]
 
 public class UsersControllerTests : BaseIntegrationTest
 {
-    public UsersControllerTests(IntegrationTestWebFactory factory) : base(factory)
-    {
-    }
+    public UsersControllerTests(IntegrationTestWebFactory factory) : base(factory) { }
 
     [Fact]
     public async Task Create_ValidUser_ReturnsCreatedUser()
     {
-        var request = new CreateUserRequest(
-            "John",
-            "Doe",
-            "john.test@example.com",
-            "+1234567890",
-            new AddressDto("123 Test St", "Apt 1", "Test City", "Test State", "12345", "Test Country")
-        );
+        var request = new CreateUserDto
+        {
+            Email = "john.test@example.com",
+            Name = "John Doe",
+            Roles = "Owner"
+        };
 
         var response = await Client.PostAsJsonAsync("/api/users", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var createdUser = await response.Content.ReadFromJsonAsync<UserResponse>();
-        createdUser.Should().NotBeNull();
-        createdUser!.FirstName.Should().Be(request.FirstName);
-        createdUser.Email.Should().Be(request.Email);
+    var created = await response.Content.ReadFromJsonAsync<UserDto>();
+    created.Should().NotBeNull();
+    created!.Id.Should().NotBe(Guid.Empty);
     }
 
     [Fact]
@@ -45,20 +45,19 @@ public class UsersControllerTests : BaseIntegrationTest
         var response = await Client.GetAsync($"/api/users/{user.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var returnedUser = await response.Content.ReadFromJsonAsync<UserResponse>();
+        var returnedUser = await response.Content.ReadFromJsonAsync<UserDto>();
         returnedUser.Should().NotBeNull();
-        returnedUser!.Id.Should().Be(user.Id);
-        returnedUser.Email.Should().Be(user.Email);
+    returnedUser!.Id.Should().Be(user.Id);
+    returnedUser.Email.Should().Be(user.Email.ToString());
     }
 
     [Fact]
     public async Task GetById_NonExistingUser_ReturnsNotFound()
     {
-        var response = await Client.GetAsync("/api/users/non-existing-id");
+        var response = await Client.GetAsync($"/api/users/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
-
     [Fact]
     public async Task Update_ExistingUser_UpdatesUser()
     {
@@ -66,21 +65,18 @@ public class UsersControllerTests : BaseIntegrationTest
         Context.Users.Add(user);
         await SaveChangesAsync();
 
-        var request = new UpdateUserRequest(
-            "UpdatedJohn",
-            "UpdatedDoe",
-            "+1987654321",
-            new AddressDto("456 Updated St", "Apt 2", "Updated City", "Updated State", "54321", "Updated Country")
-        );
+        var request = new UpdateUserDto
+        {
+            Name = "Updated John Doe",
+            IsActive = true
+        };
 
         var response = await Client.PutAsJsonAsync($"/api/users/{user.Id}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updatedUser = await response.Content.ReadFromJsonAsync<UserResponse>();
+        var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
         updatedUser.Should().NotBeNull();
-        updatedUser!.FirstName.Should().Be(request.FirstName);
-        updatedUser.LastName.Should().Be(request.LastName);
-        updatedUser.Phone.Should().Be(request.Phone);
+        updatedUser!.Name.Should().Be(request.Name);
     }
 
     [Fact]

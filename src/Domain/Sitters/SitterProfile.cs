@@ -53,4 +53,17 @@ public class SitterProfile : AggregateRoot
     {
         IsActive = false;
     }
+
+    public void UpdateProfile(string bio, decimal baseRateAmount, string baseRateCurrency, string[] servicesOffered)
+    {
+        Bio = string.IsNullOrWhiteSpace(bio) ? Bio : bio.Trim();
+        BaseRate = Money.Create(baseRateAmount, baseRateCurrency);
+        if (servicesOffered != null && servicesOffered.Length > 0)
+        {
+            ServicesOffered = servicesOffered
+                .Select(s => Enum.TryParse<SitterServiceType>(s, true, out var val) ? val : SitterServiceType.None)
+                .Aggregate(SitterServiceType.None, (acc, val) => acc | val);
+        }
+    }
+
 }

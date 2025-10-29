@@ -66,4 +66,38 @@ public class UsersController : ControllerBase
         });
         return Ok(userDtos);
     }
+
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto request, CancellationToken ct)
+    {
+        var command = new Application.Users.Commands.UpdateUser.UpdateUserCommand(id, request.Name, request.IsActive);
+        var result = await _mediator.Send(command, ct);
+        if (!result) return NotFound();
+        var updatedUser = await _mediator.Send(new Application.Users.Queries.GetUserById.GetUserByIdQuery(id), ct);
+        if (updatedUser is null) return NotFound();
+        var userDto = new UserDto
+        {
+            Id = updatedUser.Id,
+            Email = updatedUser.Email,
+            Name = updatedUser.Name,
+            Roles = string.Join(",", updatedUser.Roles.Select(r => r.ToString())),
+            IsActive = updatedUser.IsActive,
+            CreatedAt = updatedUser.CreatedAt,
+            UpdatedAt = updatedUser.UpdatedAt
+        };
+        return Ok(userDto);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var command = new Application.Users.Commands.DeleteUser.DeleteUserCommand(id);
+        var result = await _mediator.Send(command, ct);
+        if (!result) return NotFound();
+        return NoContent();
+    }
 }

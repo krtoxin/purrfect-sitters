@@ -11,6 +11,9 @@
     <ItemGroup>
       <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
       <ProjectReference Include="..\Tests.Data\Tests.Data.csproj" />
+      <None Update="appsettings.Test.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
     </ItemGroup>
 
     <ItemGroup>

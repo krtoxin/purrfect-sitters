@@ -24,4 +24,16 @@ public class PetRepository : IPetRepository
         await _db.Pets
             .Where(p => p.OwnerId == ownerId)
             .ToListAsync(ct);
+
+    public async Task UpdateAsync(Pet pet, CancellationToken ct = default)
+    {
+        _db.Pets.Update(pet);
+        await Task.CompletedTask;
+    }
+
+    public async Task DeleteAsync(Pet pet, CancellationToken ct = default)
+    {
+        _db.Pets.Remove(pet);
+        await Task.CompletedTask;
+    }
 }

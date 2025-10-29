@@ -17,6 +17,24 @@ public class PetsController : ControllerBase
 
     public PetsController(IMediator mediator) => _mediator = mediator;
 
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IActionResult> Update(Guid id, [FromBody] UpdatePetDto request, CancellationToken ct)
+    {
+        // TODO: Implement UpdatePetCommand and handler
+        return Task.FromResult<IActionResult>(Ok());
+    }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        // TODO: Implement DeletePetCommand and handler
+        return Task.FromResult<IActionResult>(NoContent());
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -79,6 +79,25 @@ public class Booking : AggregateRoot
         IEnumerable<string> careInstructionTexts)
         => new(id, petId, ownerId, sitterProfileId, startUtc, endUtc, price, serviceType, careInstructionTexts);
 
+    public void Update(DateTime startUtc, DateTime endUtc, decimal baseAmount, decimal serviceFeePercent, string currency, IEnumerable<string> careInstructionTexts)
+    {
+        if (startUtc.Kind != DateTimeKind.Utc || endUtc.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("Start and End must be UTC.");
+        if (endUtc <= startUtc)
+            throw new ArgumentException("End must be after Start.");
+
+        StartUtc = startUtc;
+        EndUtc = endUtc;
+        Price = BookingPrice.Create(baseAmount, serviceFeePercent, currency);
+        _careInstructionSnapshots.Clear();
+        foreach (var text in careInstructionTexts.Distinct().Where(t => !string.IsNullOrWhiteSpace(t)))
+        {
+            _careInstructionSnapshots.Add(BookingCareInstructionSnapshot.Create(text));
+        }
+        UpdatedAt = DateTime.UtcNow;
+        Version++;
+    }
+
     public void Accept()
     {
         EnsureStatus(BookingStatus.Requested);

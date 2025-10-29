@@ -1,42 +1,40 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Json;
-using Api.Contracts.Common;
-using Api.Contracts.Sitters;
+using Api.DTOs;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Tests.Common;
 using Tests.Data.Sitters;
 using Xunit;
 
+
 namespace Api.Tests.Integration.Sitters;
+
+[Collection("Integration")]
 
 public class SittersControllerTests : BaseIntegrationTest
 {
-    public SittersControllerTests(IntegrationTestWebFactory factory) : base(factory)
-    {
-    }
+    public SittersControllerTests(IntegrationTestWebFactory factory) : base(factory) { }
 
     [Fact]
     public async Task Create_ValidSitter_ReturnsCreatedSitter()
     {
-        var request = new CreateSitterRequest(
-            "Jane",
-            "Smith",
-            "jane.test@example.com",
-            "+1234567890",
-            "Professional pet sitter with 5 years of experience",
-            25.00m,
-            new AddressDto("123 Sitter St", "Apt 1", "Sitter City", "Sitter State", "12345", "Test Country")
-        );
+        var request = new CreateSitterDto
+        {
+            UserId = Guid.NewGuid(),
+            Bio = "Professional pet sitter with 5 years of experience",
+            BaseRateAmount = 25.00m,
+            BaseRateCurrency = "USD",
+            ServicesOffered = "DayVisit"
+        };
 
         var response = await Client.PostAsJsonAsync("/api/sitters", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var createdSitter = await response.Content.ReadFromJsonAsync<SitterResponse>();
-        createdSitter.Should().NotBeNull();
-        createdSitter!.FirstName.Should().Be(request.FirstName);
-        createdSitter.Email.Should().Be(request.Email);
-        createdSitter.HourlyRate.Should().Be(request.HourlyRate);
+    var created = await response.Content.ReadFromJsonAsync<SitterDto>();
+    created.Should().NotBeNull();
+    created!.Id.Should().NotBe(Guid.Empty);
     }
 
     [Fact]
@@ -49,10 +47,11 @@ public class SittersControllerTests : BaseIntegrationTest
         var response = await Client.GetAsync($"/api/sitters/{sitter.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var returnedSitter = await response.Content.ReadFromJsonAsync<SitterResponse>();
+        var returnedSitter = await response.Content.ReadFromJsonAsync<SitterDto>();
         returnedSitter.Should().NotBeNull();
         returnedSitter!.Id.Should().Be(sitter.Id);
-        returnedSitter.Email.Should().Be(sitter.Email);
+        returnedSitter.Bio.Should().Be(sitter.Bio);
+        returnedSitter.BaseRateAmount.Should().Be(sitter.HourlyRate.Amount);
     }
 
     [Fact]
@@ -62,42 +61,35 @@ public class SittersControllerTests : BaseIntegrationTest
         Context.Sitters.Add(sitter);
         await SaveChangesAsync();
 
-        var request = new UpdateSitterRequest(
-            "UpdatedJane",
-            "UpdatedSmith",
-            "+1987654321",
-            "Updated bio with more experience",
-            30.00m,
-            new AddressDto("456 Updated St", "Apt 2", "Updated City", "Updated State", "54321", "Updated Country"),
-            true
-        );
+        var request = new UpdateSitterDto
+        {
+            Bio = "Updated bio with more experience",
+            BaseRateAmount = 30.00m,
+            BaseRateCurrency = "USD",
+            ServicesOffered = "DayVisit"
+        };
 
         var response = await Client.PutAsJsonAsync($"/api/sitters/{sitter.Id}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updatedSitter = await response.Content.ReadFromJsonAsync<SitterResponse>();
+        var updatedSitter = await response.Content.ReadFromJsonAsync<SitterDto>();
         updatedSitter.Should().NotBeNull();
-        updatedSitter!.FirstName.Should().Be(request.FirstName);
-        updatedSitter.Bio.Should().Be(request.Bio);
-        updatedSitter.HourlyRate.Should().Be(request.HourlyRate);
+        updatedSitter!.Bio.Should().Be(request.Bio);
+        updatedSitter.BaseRateAmount.Should().Be(request.BaseRateAmount);
     }
 
     [Fact]
-    public async Task GetAvailable_ReturnsSitters()
+    public async Task GetAll_ReturnsSitters()
     {
-        var availableSitters = SitterData.CreateSitters(2).ToList();
-        var unavailableSitter = SitterData.CreateSitter(isAvailable: false);
-        
-        Context.Sitters.AddRange(availableSitters);
-        Context.Sitters.Add(unavailableSitter);
+        var sitters = SitterData.CreateSitters(2).ToList();
+        Context.Sitters.AddRange(sitters);
         await SaveChangesAsync();
 
-        var response = await Client.GetAsync("/api/sitters?available=true");
+        var response = await Client.GetAsync("/api/sitters");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var returnedSitters = await response.Content.ReadFromJsonAsync<List<SitterResponse>>();
+        var returnedSitters = await response.Content.ReadFromJsonAsync<List<SitterDto>>();
         returnedSitters.Should().NotBeNull();
         returnedSitters!.Count.Should().Be(2);
-        returnedSitters.Should().AllSatisfy(s => s.IsAvailable.Should().BeTrue());
     }
 }

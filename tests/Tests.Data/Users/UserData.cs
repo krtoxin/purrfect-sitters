@@ -6,15 +6,18 @@ namespace Tests.Data.Users;
 public static class UserData
 {
     public static User CreateUser(
-        string id = "test-user-id",
-        string name = "John Doe",
-        string email = "john.doe@example.com",
+        string? id = null,
+        string? name = null,
+        string? email = null,
         UserRole roles = UserRole.Owner)
     {
+        var userId = id != null ? Guid.Parse(id) : Guid.NewGuid();
+        var uniqueEmail = email ?? $"user_{Guid.NewGuid()}@example.com";
+        var userName = name ?? $"User {Guid.NewGuid()}";
         return User.Register(
-            Guid.Parse(id),
-            Email.Create(email),
-            name,
+            userId,
+            Email.Create(uniqueEmail),
+            userName,
             roles
         );
     }
@@ -23,9 +26,9 @@ public static class UserData
     {
         return Enumerable.Range(1, count)
             .Select(i => CreateUser(
-                id: $"test-user-{i}",
-                name: $"John Doe {i}",
-                email: $"john.doe{i}@example.com"
+                id: Guid.NewGuid().ToString(),
+                name: $"User {Guid.NewGuid()}",
+                email: $"user_{Guid.NewGuid()}@example.com"
             ));
     }
 }

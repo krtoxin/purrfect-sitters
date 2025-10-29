@@ -60,4 +60,16 @@ public class BookingRepository : IBookingRepository
 
     public async Task<IReadOnlyList<Booking>> GetAllAsync(CancellationToken ct = default) =>
         await _db.Bookings.AsNoTracking().ToListAsync(ct);
+
+    public async Task UpdateAsync(Booking booking, CancellationToken ct = default)
+    {
+        _db.Bookings.Update(booking);
+        await Task.CompletedTask;
+    }
+
+    public async Task DeleteAsync(Booking booking, CancellationToken ct = default)
+    {
+        _db.Bookings.Remove(booking);
+        await Task.CompletedTask;
+    }
 }

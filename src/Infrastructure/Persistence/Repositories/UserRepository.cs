@@ -27,4 +27,16 @@ public class UserRepository : IUserRepository
 
     public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct = default)
         => await _context.Users.AsNoTracking().ToListAsync(ct);
+
+    public async Task UpdateAsync(User user, CancellationToken ct = default)
+    {
+        _context.Users.Update(user);
+        await Task.CompletedTask;
+    }
+
+    public async Task DeleteAsync(User user, CancellationToken ct = default)
+    {
+        _context.Users.Remove(user);
+        await Task.CompletedTask;
+    }
 }

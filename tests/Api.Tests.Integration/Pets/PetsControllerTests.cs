@@ -17,7 +17,7 @@ public class PetsControllerTests : BaseIntegrationTest, IAsyncLifetime
     private Pet? _firstPet;
     private Pet? _secondPet;
 
-    public PetsControllerTests() : base(new IntegrationTestWebFactory()) { }
+    public PetsControllerTests(IntegrationTestWebFactory factory) : base(factory) { }
 
     public async Task InitializeAsync()
     {

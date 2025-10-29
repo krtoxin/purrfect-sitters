@@ -52,6 +52,18 @@ public class Pet : AggregateRoot
         string? notes = null)
         => new(id, ownerId, name, type, breed, notes);
 
+    public void Update(string name, string type, string? breed, string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name required.", nameof(name));
+        Name = name.Trim();
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            Type = Enum.Parse<PetType>(type, ignoreCase: true);
+        }
+        Breed = string.IsNullOrWhiteSpace(breed) ? null : breed.Trim();
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+    }
+
     public void AddInstruction(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
