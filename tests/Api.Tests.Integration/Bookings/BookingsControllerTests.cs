@@ -1,10 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Api.Contracts.Bookings;
-using System.Net;
-using System.Net.Http.Json;
 using Api.DTOs;
-using Api.Contracts.Bookings;
 using FluentAssertions;
 using Tests.Common;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,11 +13,9 @@ using Tests.Data.Users;
 using Application.Common.Interfaces;
 using Xunit;
 
-
 namespace Api.Tests.Integration.Bookings;
 
 [Collection("Integration")]
-
 public class BookingsControllerTests : BaseIntegrationTest
 {
     private readonly IEmailSendingService _emailService;
@@ -34,10 +29,13 @@ public class BookingsControllerTests : BaseIntegrationTest
     public async Task Create_ValidBooking_ReturnsCreatedBooking()
     {
         var owner = UserData.CreateUser();
-        var sitter = SitterData.CreateSitter();
-    var pet = PetData.FirstPet(owner.Id);
+        var sitterUser = UserData.CreateUser(); 
+        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
+        var pet = PetData.FirstPet(owner.Id);
+
         Context.Users.Add(owner);
-        Context.Sitters.Add(sitter);
+        Context.Users.Add(sitterUser);
+        Context.SitterProfiles.Add(sitterProfile);
         Context.Pets.Add(pet);
         await SaveChangesAsync();
 
@@ -45,7 +43,7 @@ public class BookingsControllerTests : BaseIntegrationTest
         {
             PetId = pet.Id,
             OwnerId = owner.Id,
-            SitterId = sitter.Id,
+            SitterId = sitterProfile.Id,
             StartDate = DateTime.UtcNow.AddDays(1),
             EndDate = DateTime.UtcNow.AddDays(1).AddHours(2),
             TotalAmount = 50.00m,
@@ -58,19 +56,22 @@ public class BookingsControllerTests : BaseIntegrationTest
         var response = await Client.PostAsJsonAsync("/api/bookings", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-    var created = await response.Content.ReadFromJsonAsync<BookingDto>();
-    created.Should().NotBeNull();
-    created!.Id.Should().NotBe(Guid.Empty);
+        var created = await response.Content.ReadFromJsonAsync<BookingDto>();
+        created.Should().NotBeNull();
+        created!.Id.Should().NotBe(Guid.Empty);
     }
 
     [Fact]
     public async Task UpdateStatus_AcceptBooking_UpdatesStatus()
     {
         var owner = UserData.CreateUser();
-        var sitter = SitterData.CreateSitter();
-        var booking = BookingData.CreateBooking(ownerId: owner.Id, sitterProfileId: sitter.Id);
+        var sitterUser = UserData.CreateUser();
+        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
+        var booking = BookingData.CreateBooking(ownerId: owner.Id, sitterProfileId: sitterProfile.Id);
+
         Context.Users.Add(owner);
-        Context.Sitters.Add(sitter);
+        Context.Users.Add(sitterUser);
+        Context.SitterProfiles.Add(sitterProfile);
         Context.Bookings.Add(booking);
         await SaveChangesAsync();
 
@@ -92,10 +93,13 @@ public class BookingsControllerTests : BaseIntegrationTest
     public async Task GetAllBookings_ReturnsBookings()
     {
         var owner = UserData.CreateUser();
-        var sitter = SitterData.CreateSitter();
-        var bookings = BookingData.CreateBookings(3, ownerId: owner.Id, sitterProfileId: sitter.Id).ToList();
+        var sitterUser = UserData.CreateUser();
+        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
+        var bookings = BookingData.CreateBookings(3, ownerId: owner.Id, sitterProfileId: sitterProfile.Id).ToList();
+
         Context.Users.Add(owner);
-        Context.Sitters.Add(sitter);
+        Context.Users.Add(sitterUser);
+        Context.SitterProfiles.Add(sitterProfile);
         Context.Bookings.AddRange(bookings);
         await SaveChangesAsync();
 

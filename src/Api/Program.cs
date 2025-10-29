@@ -30,6 +30,7 @@ Console.WriteLine($"[DEBUG] Resolved DefaultConnection: {cs}");
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }

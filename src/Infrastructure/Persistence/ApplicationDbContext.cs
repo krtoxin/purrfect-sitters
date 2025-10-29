@@ -21,6 +21,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         modelBuilder.HasAnnotation("Relational:HistoryTableName", "__EFMigrationsHistory");
         modelBuilder.HasAnnotation("Relational:HistoryTableSchema", "public");
+        modelBuilder.HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id");
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(modelBuilder);
     }

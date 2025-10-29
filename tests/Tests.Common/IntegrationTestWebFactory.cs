@@ -7,43 +7,99 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
 
 namespace Tests.Common;
 
-
 public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAsyncLifetime
 {
-    private const string NeonDbConnectionString = "Host=ep-holy-field-agyc3h7m-pooler.c-2.eu-central-1.aws.neon.tech;Port=5432;Database=neondb;Username=neondb_owner;Password=npg_PfWg5hHm1MzZ;SSL Mode=Require;Trust Server Certificate=true";
+    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
+        .WithImage("postgres:latest")
+        .WithDatabase("test-purrfect-sitters-database")
+        .WithUsername("postgres")
+        .WithPassword("postgres")
+        .Build();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Test");
+        // Start container now if not running
+        if (!_dbContainer.State.Equals(DotNet.Testcontainers.Containers.TestcontainersStates.Running))
+        {
+            _dbContainer.StartAsync().GetAwaiter().GetResult();
+        }
+
+        // Make sure the app uses the container connection string
+        Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", _dbContainer.GetConnectionString());
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
+
+        builder.ConfigureAppConfiguration((context, configBuilder) =>
+        {
+            var testConfig = new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = _dbContainer.GetConnectionString()
+            };
+            configBuilder.AddInMemoryCollection(testConfig);
+        });
+
         builder.ConfigureTestServices(services =>
         {
             RegisterDatabase(services);
-            RegisterTestServices(services);
-        })
-        .ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddJsonFile("appsettings.Test.json");
-            config.AddEnvironmentVariables();
-        });
-    }
 
-    private void RegisterTestServices(IServiceCollection services)
-    {
-        services.RemoveServiceByType(typeof(Application.Common.Interfaces.IEmailSendingService));
-        services.AddScoped<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
+            services.AddSingleton<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
+
+            var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<IntegrationTestWebFactory>>();
+            try
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                logger.LogInformation("Resetting test database...");
+                db.Database.EnsureDeletedAsync().GetAwaiter().GetResult();
+
+                try
+                {
+                    logger.LogInformation("Applying migrations to test database...");
+                    db.Database.MigrateAsync().GetAwaiter().GetResult();
+                    logger.LogInformation("Migrations applied.");
+                }
+                catch (PostgresException pex) when (pex.SqlState == "42703" || (pex.Message?.Contains("migration_id", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    logger.LogWarning(pex, "Postgres schema/history mismatch detected during migrations. Falling back to EnsureCreated for test DB.");
+                    db.Database.EnsureCreatedAsync().GetAwaiter().GetResult();
+                }
+                catch (InvalidOperationException iox) when (iox.Message != null && iox.Message.Contains("The model for context", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogWarning(iox, "EF model/migration mismatch detected. Falling back to EnsureCreated for test DB.");
+                    db.Database.EnsureCreatedAsync().GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Unexpected error while applying migrations to test DB. Attempting EnsureCreated.");
+                    db.Database.EnsureCreatedAsync().GetAwaiter().GetResult();
+                }
+
+                logger.LogInformation("Test database ready.");
+            }
+            catch (Exception ex)
+            {
+                var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+                var l = loggerFactory.CreateLogger("IntegrationTestWebFactory");
+                l.LogError(ex, "Failed to initialize test database during ConfigureTestServices");
+                throw;
+            }
+        });
     }
 
     private void RegisterDatabase(IServiceCollection services)
     {
         services.RemoveServiceByType(typeof(DbContextOptions<ApplicationDbContext>));
 
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(NeonDbConnectionString);
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(_dbContainer.GetConnectionString());
         dataSourceBuilder.EnableDynamicJson();
         var dataSource = dataSourceBuilder.Build();
 
@@ -55,8 +111,13 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
             .ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning)));
     }
 
+    public Task InitializeAsync()
+    {
+        return _dbContainer.StartAsync();
+    }
 
-
-    public Task InitializeAsync() => Task.CompletedTask;
-    public new Task DisposeAsync() => Task.CompletedTask;
+    public new Task DisposeAsync()
+    {
+        return _dbContainer.DisposeAsync().AsTask();
+    }
 }
