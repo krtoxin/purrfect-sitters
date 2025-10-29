@@ -8,6 +8,7 @@ using Application.Bookings.Commands.CancelByOwner;
 using Application.Bookings.Commands.CancelBySitter;
 using Application.Bookings.Commands.CompleteBooking;
 using Application.Bookings.Commands.CreateBooking;
+using Application.Bookings.Commands.UpdateBooking;
 using Application.Bookings.Models;
 using Application.Bookings.Queries.GetBookingById;
 using Application.Bookings.Queries.ListBookingsForOwner;
@@ -32,17 +33,53 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBookingDto request, CancellationToken ct)
     {
-        var result = await _mediator.Send(new Application.Bookings.Commands.UpdateBooking.UpdateBookingCommand(
+        if (!string.IsNullOrWhiteSpace(request.Status))
+        {
+            var rowVersionBytes = string.IsNullOrEmpty(request.RowVersion) ? Array.Empty<byte>() : Convert.FromBase64String(request.RowVersion);
+            if (string.Equals(request.Status, "Accepted", StringComparison.OrdinalIgnoreCase))
+            {
+                await _mediator.Send(new AcceptBookingCommand(id, rowVersionBytes), ct);
+            }
+            else if (string.Equals(request.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                await _mediator.Send(new CompleteBookingCommand(id, rowVersionBytes), ct);
+            }
+
+            var afterStatus = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+            if (afterStatus is null) return NotFound();
+            return Ok(afterStatus.ToResponse());
+        }
+
+        var current = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+        if (current is null) return NotFound();
+
+        var startUtc = current.StartUtc;
+        var endUtc = current.EndUtc;
+        var baseAmount = current.Price.BaseAmount;
+        var serviceFeePercent = current.Price.ServiceFeePercent.GetValueOrDefault();
+        var currency = current.Price.Currency;
+
+        var careInstructions = (request.CareInstructions ?? string.Empty)
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .ToArray();
+
+        var result = await _mediator.Send(new UpdateBookingCommand(
             id,
-            DateTime.UtcNow, 
-            DateTime.UtcNow.AddDays(1),
-            0, 
-            0,
-            "USD",
-            request.CareInstructions.Split(',', StringSplitOptions.RemoveEmptyEntries)), ct);
-        if (!result)
-            return NotFound();
-        return Ok();
+            startUtc,
+            endUtc,
+            baseAmount,
+            serviceFeePercent,
+            currency,
+            careInstructions,
+            string.IsNullOrEmpty(request.RowVersion) ? Array.Empty<byte>() : Convert.FromBase64String(request.RowVersion)), ct);
+
+        if (!result) return NotFound();
+
+        var updated = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+        if (updated is null) return NotFound();
+
+        return Ok(updated.ToResponse());
     }
 
 
@@ -104,8 +141,11 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Accept(Guid id, CancellationToken ct)
     {
-        await _mediator.Send(new AcceptBookingCommand(id), ct);
-        return NoContent();
+    var model = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+    if (model is null) return NotFound();
+    // Convert RowVersion to base64 string for API, but AcceptBookingCommand expects byte[]
+    await _mediator.Send(new AcceptBookingCommand(id, model.RowVersion), ct);
+    return NoContent();
     }
 
     [HttpPost("{id:guid}/complete")]
@@ -113,8 +153,10 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Complete(Guid id, CancellationToken ct)
     {
-        await _mediator.Send(new CompleteBookingCommand(id), ct);
-        return NoContent();
+    var model = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+    if (model is null) return NotFound();
+    await _mediator.Send(new CompleteBookingCommand(id, model.RowVersion), ct);
+    return NoContent();
     }
 
     [HttpPost("{id:guid}/cancel/owner")]
@@ -134,25 +176,13 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<BookingDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<BookingResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var bookings = await _mediator.Send(new ListAllBookingsQuery(), ct);
-        var bookingDtos = bookings.Select(b => new BookingDto
-        {
-            Id = b.Id,
-            PetId = b.PetId,
-            OwnerId = b.OwnerId,
-            SitterId = b.SitterProfileId,
-            StartDate = b.StartUtc,
-            EndDate = b.EndUtc,
-            Status = b.Status.ToString(),
-            TotalAmount = b.Price.TotalAmount,
-            ServiceFee = b.Price.ServiceFeeAmount,
-            Currency = b.Price.Currency,
-            ServiceType = b.ServiceType.ToString(),
-            CreatedAt = b.CreatedAt
-        });
-        return Ok(bookingDtos);
+        var responses = bookings
+            .Select(b => b.ToReadModel())
+            .Select(rm => rm.ToResponse());
+        return Ok(responses);
     }
 }

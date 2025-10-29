@@ -1,16 +1,17 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
-using Api.Contracts.Bookings;
+using System.Threading.Tasks;
 using Api.DTOs;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Tests.Common;
-using Microsoft.Extensions.DependencyInjection;
-using Tests.Common.Services;
 using Tests.Data.Bookings;
 using Tests.Data.Pets;
 using Tests.Data.Sitters;
 using Tests.Data.Users;
-using Application.Common.Interfaces;
 using Xunit;
 
 namespace Api.Tests.Integration.Bookings;
@@ -18,18 +19,20 @@ namespace Api.Tests.Integration.Bookings;
 [Collection("Integration")]
 public class BookingsControllerTests : BaseIntegrationTest
 {
-    private readonly IEmailSendingService _emailService;
+    public BookingsControllerTests(IntegrationTestWebFactory factory) : base(factory) { }
 
-    public BookingsControllerTests(IntegrationTestWebFactory factory) : base(factory)
+    [Fact]
+    public async Task Create_ValidBooking_ReturnsCreatedBooking()
     {
-        _emailService = factory.Services.GetRequiredService<IEmailSendingService>();
-    }
 
-   [Fact]
-  public async Task Create_ValidBooking_ReturnsCreatedBooking()
-    {
+        Context.Bookings.RemoveRange(Context.Bookings);
+        Context.Pets.RemoveRange(Context.Pets);
+        Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
+        Context.Users.RemoveRange(Context.Users);
+        await SaveChangesAsync();
+
         var owner = UserData.CreateUser();
-        var sitterUser = UserData.CreateUser(); 
+        var sitterUser = UserData.CreateUser();
         var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
         var pet = PetData.FirstPet(owner.Id);
 
@@ -39,70 +42,51 @@ public class BookingsControllerTests : BaseIntegrationTest
         Context.Pets.Add(pet);
         await SaveChangesAsync();
 
-        var startUtc = DateTime.UtcNow.AddDays(1);
-        var endUtc = startUtc.AddHours(2);
-
-        var request = new
+        var createRequest = new
         {
             PetId = pet.Id,
-            SitterProfileId = sitterProfile.Id,   
-            StartUtc = startUtc,                 
-            EndUtc = endUtc,
-            BaseAmount = 50.00m,                  
+            SitterProfileId = sitterProfile.Id,
+            StartUtc = DateTime.UtcNow.AddDays(1),
+            EndUtc = DateTime.UtcNow.AddDays(1).AddHours(2),
+            BaseAmount = 50.00m,
             ServiceFeePercent = 10.0m,
             Currency = "USD",
             CareInstructionTexts = new[] { "Please take good care of my pet" }
         };
 
-        var response = await Client.PostAsJsonAsync("/api/bookings", request);
+        var createResponse = await Client.PostAsJsonAsync("/api/bookings", createRequest);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var createdObj = await createResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+        createdObj.Should().NotBeNull();
+        var idRaw = createdObj["id"].ToString();
+        Guid bookingId = Guid.Parse(idRaw!);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("==== SERVER RESPONSE START ====");
-            Console.WriteLine($"Status: {(int)response.StatusCode} {response.ReasonPhrase}");
-            Console.WriteLine("Body:");
-            Console.WriteLine(string.IsNullOrWhiteSpace(body) ? "<empty>" : body);
-            Console.WriteLine("==== SERVER RESPONSE END ====");
-        }
+        var getResponse = await Client.GetAsync($"/api/bookings/{bookingId}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var booking = await getResponse.Content.ReadFromJsonAsync<BookingDto>();
+        booking.Should().NotBeNull();
 
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await response.Content.ReadFromJsonAsync<BookingDto>();
-        created.Should().NotBeNull();
-        created!.Id.Should().NotBe(Guid.Empty);
-    }
+        var acceptRequest = new { RowVersion = booking!.RowVersion };
+        var acceptResponse = await Client.PostAsJsonAsync($"/api/bookings/{bookingId}/accept", acceptRequest);
+        acceptResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-    [Fact]
-    public async Task UpdateStatus_AcceptBooking_UpdatesStatus()
-    {
-        var owner = UserData.CreateUser();
-        var sitterUser = UserData.CreateUser();
-        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
-        var booking = BookingData.CreateBooking(ownerId: owner.Id, sitterProfileId: sitterProfile.Id);
+        var getResponse2 = await Client.GetAsync($"/api/bookings/{bookingId}");
+        getResponse2.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await getResponse2.Content.ReadFromJsonAsync<BookingDto>();
+        updated.Should().NotBeNull();
+        updated!.Status.Should().Be("Accepted");
 
-        Context.Users.Add(owner);
-        Context.Users.Add(sitterUser);
-        Context.SitterProfiles.Add(sitterProfile);
-        Context.Bookings.Add(booking);
-        await SaveChangesAsync();
-
-        var request = new UpdateBookingDto
-        {
-            Status = "Accepted",
-            CareInstructions = ""
-        };
-
-        var response = await Client.PutAsJsonAsync($"/api/bookings/{booking.Id}", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updatedBooking = await response.Content.ReadFromJsonAsync<BookingDto>();
-        updatedBooking.Should().NotBeNull();
-        updatedBooking!.Status.Should().Be("Accepted");
     }
 
     [Fact]
     public async Task GetAllBookings_ReturnsBookings()
     {
+        Context.Bookings.RemoveRange(Context.Bookings);
+        Context.Pets.RemoveRange(Context.Pets);
+        Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
+        Context.Users.RemoveRange(Context.Users);
+        await SaveChangesAsync();
+
         var owner = UserData.CreateUser();
         var sitterUser = UserData.CreateUser();
         var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);

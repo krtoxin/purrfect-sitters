@@ -18,6 +18,7 @@ namespace Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id")
                 .HasAnnotation("Relational:HistoryTableName", "__EFMigrationsHistory")
                 .HasAnnotation("Relational:HistoryTableSchema", "public")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
@@ -66,6 +67,14 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("pet_id");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("row_version")
+                        .HasDefaultValueSql("decode('0000000000000000','hex')");
+
                     b.Property<int>("ServiceType")
                         .HasColumnType("integer")
                         .HasColumnName("service_type");
@@ -85,11 +94,6 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
-
-                    b.Property<long>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("bigint")
-                        .HasColumnName("version");
 
                     b.HasKey("Id")
                         .HasName("pk_bookings");

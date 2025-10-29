@@ -29,7 +29,7 @@ public static class BookingApiMappings
             model.SitterProfileId,
             model.StartUtc,
             model.EndUtc,
-            model.Status,
+            model.Status.ToString(),
             price,
             model.IsReviewed,
             model.CreatedAt,
@@ -37,7 +37,7 @@ public static class BookingApiMappings
             model.CompletedAtUtc,
             model.CancelledAtUtc,
             model.CancellationReason,
-            model.Version,
+            model.RowVersion,
             history,
             care);
     }

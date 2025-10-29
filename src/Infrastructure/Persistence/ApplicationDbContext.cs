@@ -19,9 +19,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasAnnotation("Relational:HistoryTableName", "__EFMigrationsHistory");
-        modelBuilder.HasAnnotation("Relational:HistoryTableSchema", "public");
-        modelBuilder.HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id");
+    modelBuilder.HasAnnotation("Relational:HistoryTableName", "__EFMigrationsHistory");
+    modelBuilder.HasAnnotation("Relational:HistoryTableSchema", "public");
+    modelBuilder.HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id");
+    modelBuilder.HasAnnotation("Relational:HistoryTableProductVersionColumnName", "product_version");
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(modelBuilder);
     }

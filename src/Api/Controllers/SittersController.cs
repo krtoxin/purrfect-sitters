@@ -23,12 +23,18 @@ public class SittersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSitterDto request, CancellationToken ct)
     {
+        // Defensive: ensure required fields and valid services (string only)
+        if (string.IsNullOrWhiteSpace(request.Bio) || request.BaseRateAmount is null || string.IsNullOrWhiteSpace(request.BaseRateCurrency) || string.IsNullOrWhiteSpace(request.ServicesOffered))
+            return BadRequest();
+        var services = request.ServicesOffered.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        if (services.Length == 0)
+            return BadRequest();
         var result = await _mediator.Send(new Application.Sitters.Commands.UpdateSitter.UpdateSitterCommand(
             id,
             request.Bio,
-            request.BaseRateAmount ?? 0,
-            request.BaseRateCurrency ?? "USD",
-            request.ServicesOffered.Split(',', StringSplitOptions.RemoveEmptyEntries)), ct);
+            request.BaseRateAmount.Value,
+            request.BaseRateCurrency,
+            services), ct);
         if (!result)
             return NotFound();
         return Ok();

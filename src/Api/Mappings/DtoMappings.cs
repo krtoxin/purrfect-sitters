@@ -100,35 +100,42 @@ public static class DtoMappings
             Id = booking.Id,
             PetId = booking.PetId,
             OwnerId = booking.OwnerId,
-            SitterId = booking.SitterProfileId,
-            StartDate = booking.StartUtc,
-            EndDate = booking.EndUtc,
+            SitterProfileId = booking.SitterProfileId,
+            StartUtc = booking.StartUtc,
+            EndUtc = booking.EndUtc,
             Status = booking.Status.ToString(),
-            TotalAmount = booking.Price.TotalAmount,
-            ServiceFee = booking.Price.ServiceFeeAmount,
-            Currency = booking.Price.Currency,
+            Price = new BookingPriceDto {
+                BaseAmount = booking.Price.BaseAmount,
+                ServiceFeePercent = booking.Price.ServiceFeePercent,
+                ServiceFeeAmount = booking.Price.ServiceFeeAmount,
+                TotalAmount = booking.Price.TotalAmount,
+                Currency = booking.Price.Currency
+            },
             ServiceType = booking.ServiceType.ToString(),
-            CareInstructions = string.Join("; ", booking.CareInstructionSnapshots.Select(ci => ci.Text)),
+            CareInstructions = booking.CareInstructionSnapshots.Select(ci => ci.Text),
             CreatedAt = booking.CreatedAt,
-            UpdatedAt = booking.UpdatedAt
+            UpdatedAt = booking.UpdatedAt,
+                RowVersion = booking.RowVersion != null ? Convert.ToBase64String(booking.RowVersion) : string.Empty
         };
     }
 
     public static Domain.Bookings.Booking ToDomain(this CreateBookingDto dto)
     {
-        var price = Domain.Bookings.BookingPrice.Create(dto.TotalAmount, dto.ServiceFee, dto.Currency);
-        var serviceType = Enum.Parse<SitterServiceType>(dto.ServiceType, ignoreCase: true);
-        var careInstructions = dto.CareInstructions.Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .Select(instruction => instruction.Trim())
-            .ToArray();
+        var price = Domain.Bookings.BookingPrice.Create(
+            dto.BaseAmount,
+            dto.ServiceFeePercent ?? 0,
+            dto.Currency
+        );
+        var serviceType = Domain.Sitters.SitterServiceType.None; // Default to None
+        var careInstructions = dto.CareInstructionTexts?.ToArray() ?? Array.Empty<string>();
 
         return Domain.Bookings.Booking.Create(
             Guid.NewGuid(),
             dto.PetId,
-            dto.OwnerId,
-            dto.SitterId,
-            dto.StartDate,
-            dto.EndDate,
+            Guid.Empty, // OwnerId not present in CreateBookingDto
+            dto.SitterProfileId,
+            dto.StartUtc,
+            dto.EndUtc,
             price,
             serviceType,
             careInstructions

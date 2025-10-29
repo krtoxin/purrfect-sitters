@@ -51,9 +51,12 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .HasColumnName("is_reviewed")
             .HasDefaultValue(false);
 
-        builder.Property(x => x.Version)
-            .HasColumnName("version")
-            .IsConcurrencyToken();
+        builder.Property(x => x.RowVersion)
+            .HasColumnName("row_version")
+            .HasColumnType("bytea")
+            // Provide a default 8-byte zero value so inserts without an explicit value won't fail.
+            .HasDefaultValueSql("decode('0000000000000000','hex')")
+            .IsRowVersion();
 
         builder.OwnsOne(x => x.Price, b =>
         {

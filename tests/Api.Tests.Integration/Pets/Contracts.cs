@@ -2,6 +2,7 @@ using Domain.Pets;
 
 public class CreatePetRequest
 {
+    public Guid OwnerId { get; set; }
     public string Name { get; set; } = string.Empty;
     public PetType Type { get; set; }
     public string? Breed { get; set; }
@@ -11,7 +12,6 @@ public class CreatePetRequest
 public class UpdatePetRequest
 {
     public string Name { get; set; } = string.Empty;
-    public PetType Type { get; set; }
     public string? Breed { get; set; }
     public string? Notes { get; set; }
 }

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Domain.Bookings;
 
 namespace Api.Contracts.Bookings.Responses;
@@ -9,7 +11,7 @@ public sealed record BookingResponse(
     Guid SitterProfileId,
     DateTime StartUtc,
     DateTime EndUtc,
-    BookingStatus Status,
+    string Status,
     BookingPriceResponse Price,
     bool IsReviewed,
     DateTime CreatedAt,
@@ -17,6 +19,6 @@ public sealed record BookingResponse(
     DateTime? CompletedAtUtc,
     DateTime? CancelledAtUtc,
     BookingCancellationReason? CancellationReason,
-    long Version,
+    byte[] RowVersion,
     IEnumerable<BookingStatusHistoryResponse> StatusHistory,
     IEnumerable<BookingCareInstructionResponse> CareInstructions);

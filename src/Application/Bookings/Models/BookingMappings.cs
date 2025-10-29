@@ -38,7 +38,7 @@ public static class BookingMappings
             b.CompletedAtUtc,
             b.CancelledAtUtc,
             b.CancellationReason,
-            b.Version,
+            b.RowVersion,
             history,
             care);
     }

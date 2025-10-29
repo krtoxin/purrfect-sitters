@@ -9,5 +9,6 @@ public sealed record UpdateBookingCommand(
     decimal BaseAmount,
     decimal ServiceFeePercent,
     string Currency,
-    string[] CareInstructionTexts
+    string[] CareInstructionTexts,
+    byte[] RowVersion
 ) : IRequest<bool>;

@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+
 namespace Api.DTOs;
 
 public class SitterDto
@@ -24,6 +28,7 @@ public class CreateSitterDto
     public string ServicesOffered { get; set; } = "DayVisit";
 }
 
+
 public class UpdateSitterDto
 {
     public string Bio { get; set; } = string.Empty;
@@ -31,3 +36,4 @@ public class UpdateSitterDto
     public string? BaseRateCurrency { get; set; }
     public string ServicesOffered { get; set; } = string.Empty;
 }
+

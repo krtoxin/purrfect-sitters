@@ -27,17 +27,16 @@ public class Booking : AggregateRoot
         if (endUtc <= startUtc)
             throw new ArgumentException("End must be after Start.");
 
-        Id = id;
-        PetId = petId;
-        OwnerId = ownerId;
-        SitterProfileId = sitterProfileId;
-        StartUtc = startUtc;
-        EndUtc = endUtc;
-        Status = BookingStatus.Requested;
-        Price = price;
-        ServiceType = serviceType;
-        CreatedAt = DateTime.UtcNow;
-        Version = 0;
+    Id = id;
+    PetId = petId;
+    OwnerId = ownerId;
+    SitterProfileId = sitterProfileId;
+    StartUtc = startUtc;
+    EndUtc = endUtc;
+    Status = BookingStatus.Requested;
+    Price = price;
+    ServiceType = serviceType;
+    CreatedAt = DateTime.UtcNow;
 
         foreach (var text in careInstructionTexts.Distinct().Where(t => !string.IsNullOrWhiteSpace(t)))
         {
@@ -62,7 +61,8 @@ public class Booking : AggregateRoot
     public BookingCancellationReason? CancellationReason { get; private set; }
     public SitterServiceType ServiceType { get; private set; }
     public bool IsReviewed { get; private set; }
-    public long Version { get; private set; } // optimistic concurrency
+    [System.ComponentModel.DataAnnotations.Timestamp]
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     public IReadOnlyCollection<BookingStatusHistory> StatusHistory => _statusHistory;
     public IReadOnlyCollection<BookingCareInstructionSnapshot> CareInstructionSnapshots => _careInstructionSnapshots;
@@ -94,15 +94,14 @@ public class Booking : AggregateRoot
         {
             _careInstructionSnapshots.Add(BookingCareInstructionSnapshot.Create(text));
         }
-        UpdatedAt = DateTime.UtcNow;
-        Version++;
+    UpdatedAt = DateTime.UtcNow;
     }
 
     public void Accept()
     {
-        EnsureStatus(BookingStatus.Requested);
-        Transition(BookingStatus.Accepted);
-        Raise(new BookingAcceptedEvent(Id));
+    EnsureStatus(BookingStatus.Requested);
+    Transition(BookingStatus.Accepted);
+    Raise(new BookingAcceptedEvent(Id));
     }
 
     public void Reject()
@@ -119,10 +118,10 @@ public class Booking : AggregateRoot
 
     public void Complete()
     {
-        EnsureStatus(BookingStatus.InProgress);
-        Transition(BookingStatus.Completed);
-        CompletedAtUtc = DateTime.UtcNow;
-        Raise(new BookingCompletedEvent(Id));
+    EnsureStatus(BookingStatus.InProgress);
+    Transition(BookingStatus.Completed);
+    CompletedAtUtc = DateTime.UtcNow;
+    Raise(new BookingCompletedEvent(Id));
     }
 
     public void CancelByOwner(BookingCancellationReason reason)
@@ -169,11 +168,10 @@ public class Booking : AggregateRoot
 
     private void Transition(BookingStatus newStatus)
     {
-        if (Status == newStatus) return;
-        Status = newStatus;
-        UpdatedAt = DateTime.UtcNow;
-        AddStatusHistory(Status);
-        Version++; 
+    if (Status == newStatus) return;
+    Status = newStatus;
+    UpdatedAt = DateTime.UtcNow;
+    AddStatusHistory(Status);
     }
 
     private void AddStatusHistory(BookingStatus status)

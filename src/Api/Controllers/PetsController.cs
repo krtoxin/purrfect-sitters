@@ -51,6 +51,12 @@ public class PetsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreatePetDto request, CancellationToken ct)
     {
+        // Robust validation for test: reject empty/whitespace OwnerId, Name, or Type
+        if (request.OwnerId == Guid.Empty || string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Type))
+            return BadRequest();
+        if (string.IsNullOrWhiteSpace(request.Name?.Trim()) || request.Name.Trim().Length < 2)
+            return BadRequest();
+
         var id = await _mediator.Send(new CreatePetCommand(
             request.OwnerId,
             request.Name,

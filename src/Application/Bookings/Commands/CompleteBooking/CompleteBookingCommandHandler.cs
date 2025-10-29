@@ -19,6 +19,9 @@ public class CompleteBookingCommandHandler : IRequestHandler<CompleteBookingComm
         var booking = await _bookings.GetByIdAsync(request.BookingId, ct)
             ?? throw new InvalidOperationException("Booking not found.");
 
+        if (!booking.RowVersion.SequenceEqual(request.RowVersion))
+            throw new InvalidOperationException("Booking version mismatch (concurrency error).");
+
         booking.Complete();
         await _uow.SaveChangesAsync(ct);
         return Unit.Value;
