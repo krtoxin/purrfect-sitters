@@ -1,5 +1,7 @@
 using System;
+
 using System.Collections.Generic;
+using Api.Contracts.Bookings.Responses;
 
 namespace Api.DTOs;
 
@@ -19,12 +21,11 @@ public class BookingDto
 
     public string ServiceType { get; set; } = string.Empty;
 
-    public IEnumerable<string> CareInstructions { get; set; } = Array.Empty<string>();
+    public IEnumerable<BookingCareInstructionResponse> CareInstructions { get; set; } = Array.Empty<BookingCareInstructionResponse>();
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
-    public string RowVersion { get; set; } = string.Empty;
 }
 
 public class BookingPriceDto
@@ -60,5 +61,4 @@ public class UpdateBookingDto
 
     public string? CareInstructions { get; set; }
 
-    public string RowVersion { get; set; } = string.Empty;
 }

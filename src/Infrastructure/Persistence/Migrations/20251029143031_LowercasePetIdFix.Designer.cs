@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Infrastructure.Migrations
+namespace Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251029053218_UseRowVersionForBookings")]
-    partial class UseRowVersionForBookings
+    [Migration("20251029143031_LowercasePetIdFix")]
+    partial class LowercasePetIdFix
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,7 @@ namespace Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id")
                 .HasAnnotation("Relational:HistoryTableName", "__EFMigrationsHistory")
+                .HasAnnotation("Relational:HistoryTableProductVersionColumnName", "product_version")
                 .HasAnnotation("Relational:HistoryTableSchema", "public")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -32,7 +33,8 @@ namespace Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<int?>("CancellationReason")
                         .HasColumnType("integer")
@@ -69,14 +71,6 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("PetId")
                         .HasColumnType("uuid")
                         .HasColumnName("pet_id");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea")
-                        .HasColumnName("row_version")
-                        .HasDefaultValueSql("decode('0000000000000000','hex')");
 
                     b.Property<int>("ServiceType")
                         .HasColumnType("integer")
@@ -454,7 +448,8 @@ namespace Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Breed")
                         .HasColumnType("varchar(150)")

@@ -19,6 +19,5 @@ public sealed record BookingResponse(
     DateTime? CompletedAtUtc,
     DateTime? CancelledAtUtc,
     BookingCancellationReason? CancellationReason,
-    byte[] RowVersion,
     IEnumerable<BookingStatusHistoryResponse> StatusHistory,
     IEnumerable<BookingCareInstructionResponse> CareInstructions);

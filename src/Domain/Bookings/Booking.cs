@@ -62,7 +62,6 @@ public class Booking : AggregateRoot
     public SitterServiceType ServiceType { get; private set; }
     public bool IsReviewed { get; private set; }
     [System.ComponentModel.DataAnnotations.Timestamp]
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     public IReadOnlyCollection<BookingStatusHistory> StatusHistory => _statusHistory;
     public IReadOnlyCollection<BookingCareInstructionSnapshot> CareInstructionSnapshots => _careInstructionSnapshots;

@@ -1,5 +1,10 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Application.Common.Interfaces;
+using Domain.Bookings;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Bookings.Commands.CompleteBooking;
 
@@ -19,11 +24,26 @@ public class CompleteBookingCommandHandler : IRequestHandler<CompleteBookingComm
         var booking = await _bookings.GetByIdAsync(request.BookingId, ct)
             ?? throw new InvalidOperationException("Booking not found.");
 
-        if (!booking.RowVersion.SequenceEqual(request.RowVersion))
-            throw new InvalidOperationException("Booking version mismatch (concurrency error).");
-
         booking.Complete();
-        await _uow.SaveChangesAsync(ct);
-        return Unit.Value;
+        await _bookings.UpdateAsync(booking, ct);
+
+        try
+        {
+            await _uow.SaveChangesAsync(ct);
+            return Unit.Value;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            var fresh = await _bookings.GetByIdAsync(request.BookingId, ct)
+                ?? throw new InvalidOperationException("Booking not found after concurrency failure.");
+
+            if (fresh.Status == BookingStatus.Completed)
+                return Unit.Value;
+
+            fresh.Complete();
+            await _bookings.UpdateAsync(fresh, ct);
+            await _uow.SaveChangesAsync(ct);
+            return Unit.Value;
+        }
     }
 }

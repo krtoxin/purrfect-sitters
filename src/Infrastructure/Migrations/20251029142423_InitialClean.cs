@@ -33,8 +33,7 @@ namespace Infrastructure.Migrations
                     cancelled_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     cancellation_reason = table.Column<int>(type: "integer", nullable: true),
                     service_type = table.Column<int>(type: "integer", nullable: false),
-                    is_reviewed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    version = table.Column<long>(type: "bigint", nullable: false)
+                    is_reviewed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {

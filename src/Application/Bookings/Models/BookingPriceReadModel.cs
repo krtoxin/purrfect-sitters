@@ -34,6 +34,5 @@ public sealed record BookingReadModel(
     DateTime? CompletedAtUtc,
     DateTime? CancelledAtUtc,
     BookingCancellationReason? CancellationReason,
-    byte[] RowVersion,
     IEnumerable<BookingStatusHistoryReadModel> StatusHistory,
     IEnumerable<BookingCareInstructionReadModel> CareInstructions);

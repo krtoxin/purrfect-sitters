@@ -10,6 +10,7 @@ public class SitterProfileConfiguration : IEntityTypeConfiguration<SitterProfile
     {
         builder.ToTable("sitter_profiles");
         builder.HasKey(x => x.Id).HasName("pk_sitter_profiles");
+        builder.Property(x => x.Id).HasColumnName("id");
 
         builder.Property(x => x.UserId)
             .HasColumnName("user_id")

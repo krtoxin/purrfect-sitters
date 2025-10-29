@@ -112,10 +112,9 @@ public static class DtoMappings
                 Currency = booking.Price.Currency
             },
             ServiceType = booking.ServiceType.ToString(),
-            CareInstructions = booking.CareInstructionSnapshots.Select(ci => ci.Text),
+            CareInstructions = booking.CareInstructionSnapshots.Select(ci => new Api.Contracts.Bookings.Responses.BookingCareInstructionResponse(ci.Id, ci.Text, ci.CreatedAt)),
             CreatedAt = booking.CreatedAt,
-            UpdatedAt = booking.UpdatedAt,
-                RowVersion = booking.RowVersion != null ? Convert.ToBase64String(booking.RowVersion) : string.Empty
+            UpdatedAt = booking.UpdatedAt
         };
     }
 

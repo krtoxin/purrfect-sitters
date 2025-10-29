@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Domain.Bookings;
 using Microsoft.EntityFrameworkCore;
@@ -10,13 +15,19 @@ public class BookingRepository : IBookingRepository
     public BookingRepository(ApplicationDbContext db) => _db = db;
 
     public Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        _db.Bookings.FirstOrDefaultAsync(b => b.Id == id, ct);
+        _db.Bookings
+            .Include(b => b.StatusHistory)
+            .Include(b => b.CareInstructionSnapshots)
+            .FirstOrDefaultAsync(b => b.Id == id, ct);
 
+    // IMPORTANT: Do not call SaveChanges here — UnitOfWork is responsible for committing.
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
-        await _db.Bookings.AddAsync(booking, ct);
-        await _db.SaveChangesAsync(ct); 
-        await _db.Entry(booking).ReloadAsync(ct);
+    await _db.Bookings.AddAsync(booking, ct);
+    await _db.SaveChangesAsync(ct); // Save to get xmin
+    await _db.Entry(booking).ReloadAsync(ct); // Hydrate xmin
+    var xmin = _db.Entry(booking).Property("xmin").CurrentValue;
+    Console.WriteLine($"[REPO] Booking added, saved, and reloaded. xmin: {xmin}");
     }
 
     public Task<bool> ExistsAsync(Guid id, CancellationToken ct = default) =>
@@ -67,7 +78,7 @@ public class BookingRepository : IBookingRepository
 
     public async Task UpdateAsync(Booking booking, CancellationToken ct = default)
     {
-        _db.Bookings.Update(booking);
+        // No-op: If the entity is tracked, EF Core will persist changes automatically.
         await Task.CompletedTask;
     }
 

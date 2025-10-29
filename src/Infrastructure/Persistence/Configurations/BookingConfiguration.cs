@@ -11,6 +11,7 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.ToTable("bookings");
         builder.HasKey(x => x.Id).HasName("pk_bookings");
 
+        builder.Property(x => x.Id).HasColumnName("id");
         builder.Property(x => x.PetId).HasColumnName("pet_id").IsRequired();
         builder.Property(x => x.OwnerId).HasColumnName("owner_id").IsRequired();
         builder.Property(x => x.SitterProfileId).HasColumnName("sitter_profile_id").IsRequired();
@@ -25,7 +26,8 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
 
         builder.Property(x => x.Status)
             .HasColumnName("status")
-            .IsRequired();
+            .IsRequired()
+            .HasConversion<int>();
 
         builder.Property(x => x.ServiceType)
             .HasColumnName("service_type")
@@ -51,12 +53,7 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .HasColumnName("is_reviewed")
             .HasDefaultValue(false);
 
-        builder.Property(x => x.RowVersion)
-            .HasColumnName("row_version")
-            .HasColumnType("bytea")
-            // Provide a default 8-byte zero value so inserts without an explicit value won't fail.
-            .HasDefaultValueSql("decode('0000000000000000','hex')")
-            .IsRowVersion();
+        // Do NOT map xmin here. It will be mapped at runtime only via extension method.
 
         builder.OwnsOne(x => x.Price, b =>
         {

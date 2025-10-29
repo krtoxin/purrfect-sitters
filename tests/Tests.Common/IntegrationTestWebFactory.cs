@@ -68,27 +68,9 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
                 logger.LogInformation("Resetting test database...");
                 db.Database.EnsureDeletedAsync().GetAwaiter().GetResult();
 
-                try
-                {
-                    logger.LogInformation("Applying migrations to test database...");
-                    db.Database.MigrateAsync().GetAwaiter().GetResult();
-                    logger.LogInformation("Migrations applied.");
-                }
-                catch (PostgresException pex) when (pex.SqlState == "42703" || (pex.Message?.Contains("migration_id", StringComparison.OrdinalIgnoreCase) ?? false))
-                {
-                    logger.LogWarning(pex, "Postgres schema/history mismatch detected during migrations. Falling back to EnsureCreated for test DB.");
-                    db.Database.EnsureCreatedAsync().GetAwaiter().GetResult();
-                }
-                catch (InvalidOperationException iox) when (iox.Message != null && iox.Message.Contains("The model for context", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogWarning(iox, "EF model/migration mismatch detected. Falling back to EnsureCreated for test DB.");
-                    db.Database.EnsureCreatedAsync().GetAwaiter().GetResult();
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Unexpected error while applying migrations to test DB. Attempting EnsureCreated.");
-                    db.Database.EnsureCreatedAsync().GetAwaiter().GetResult();
-                }
+                logger.LogInformation("Applying EF Core migrations for test schema...");
+                db.Database.MigrateAsync().GetAwaiter().GetResult();
+                logger.LogInformation("Test schema created via migrations.");
 
                 logger.LogInformation("Test database ready.");
             }
@@ -114,7 +96,10 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
                 dataSource,
                 builder => builder.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName))
             .UseSnakeCaseNamingConvention()
-            .ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning)));
+            .ConfigureWarnings(w => {
+                w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning);
+                w.Ignore(RelationalEventId.PendingModelChangesWarning);
+            }));
     }
 
     public Task InitializeAsync()

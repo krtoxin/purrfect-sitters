@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Api.Contracts.Bookings.Requests;
 using Api.Contracts.Bookings.Responses;
 using Api.Contracts.Common;
@@ -33,23 +37,25 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBookingDto request, CancellationToken ct)
     {
+        // If a status change requested, use dedicated commands (no row-version passed from controller).
         if (!string.IsNullOrWhiteSpace(request.Status))
         {
-            var rowVersionBytes = string.IsNullOrEmpty(request.RowVersion) ? Array.Empty<byte>() : Convert.FromBase64String(request.RowVersion);
             if (string.Equals(request.Status, "Accepted", StringComparison.OrdinalIgnoreCase))
             {
-                await _mediator.Send(new AcceptBookingCommand(id, rowVersionBytes), ct);
+                await _mediator.Send(new AcceptBookingCommand(id), ct);
             }
             else if (string.Equals(request.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             {
-                await _mediator.Send(new CompleteBookingCommand(id, rowVersionBytes), ct);
+                await _mediator.Send(new CompleteBookingCommand(id), ct);
             }
 
+            // Re-fetch after status change to ensure latest state
             var afterStatus = await _mediator.Send(new GetBookingByIdQuery(id), ct);
             if (afterStatus is null) return NotFound();
             return Ok(afterStatus.ToResponse());
         }
 
+        // No status change — partial update: preserve existing times/price and update care instructions
         var current = await _mediator.Send(new GetBookingByIdQuery(id), ct);
         if (current is null) return NotFound();
 
@@ -71,8 +77,7 @@ public class BookingsController : ControllerBase
             baseAmount,
             serviceFeePercent,
             currency,
-            careInstructions,
-            string.IsNullOrEmpty(request.RowVersion) ? Array.Empty<byte>() : Convert.FromBase64String(request.RowVersion)), ct);
+            careInstructions), ct);
 
         if (!result) return NotFound();
 
@@ -141,11 +146,15 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Accept(Guid id, CancellationToken ct)
     {
-    var model = await _mediator.Send(new GetBookingByIdQuery(id), ct);
-    if (model is null) return NotFound();
-    // Convert RowVersion to base64 string for API, but AcceptBookingCommand expects byte[]
-    await _mediator.Send(new AcceptBookingCommand(id, model.RowVersion), ct);
-    return NoContent();
+        var model = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+        if (model is null) return NotFound();
+
+        // Don't pass row-version bytes from controller; handler handles concurrency.
+        await _mediator.Send(new AcceptBookingCommand(id), ct);
+        // Re-fetch after status change to ensure latest state (for persistence, not for response)
+        var afterStatus = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+        if (afterStatus is null) return NotFound();
+        return NoContent();
     }
 
     [HttpPost("{id:guid}/complete")]
@@ -153,10 +162,14 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Complete(Guid id, CancellationToken ct)
     {
-    var model = await _mediator.Send(new GetBookingByIdQuery(id), ct);
-    if (model is null) return NotFound();
-    await _mediator.Send(new CompleteBookingCommand(id, model.RowVersion), ct);
-    return NoContent();
+        var model = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+        if (model is null) return NotFound();
+
+        await _mediator.Send(new CompleteBookingCommand(id), ct);
+        // Re-fetch after status change to ensure latest state (for persistence, not for response)
+        var afterStatus = await _mediator.Send(new GetBookingByIdQuery(id), ct);
+        if (afterStatus is null) return NotFound();
+        return NoContent();
     }
 
     [HttpPost("{id:guid}/cancel/owner")]

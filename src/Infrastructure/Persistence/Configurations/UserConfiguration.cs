@@ -10,6 +10,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("users");
         builder.HasKey(x => x.Id).HasName("pk_users");
+        builder.Property(x => x.Id).HasColumnName("id");
 
         builder.OwnsOne(x => x.Email, b =>
         {

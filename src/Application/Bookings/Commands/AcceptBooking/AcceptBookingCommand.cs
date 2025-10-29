@@ -2,4 +2,4 @@ using MediatR;
 
 namespace Application.Bookings.Commands.AcceptBooking;
 
-public sealed record AcceptBookingCommand(Guid BookingId, byte[] RowVersion) : IRequest;
+public sealed record AcceptBookingCommand(Guid BookingId, long? ExpectedVersion = null) : IRequest;

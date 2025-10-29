@@ -11,6 +11,7 @@ public class PetConfiguration : IEntityTypeConfiguration<Pet>
     {
         builder.ToTable("pets");
         builder.HasKey(x => x.Id).HasName("pk_pets");
+        builder.Property(x => x.Id).HasColumnName("id");
 
         builder.Property(x => x.OwnerId)
             .HasColumnName("owner_id")

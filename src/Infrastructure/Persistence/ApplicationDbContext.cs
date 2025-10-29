@@ -19,11 +19,17 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-    modelBuilder.HasAnnotation("Relational:HistoryTableName", "__EFMigrationsHistory");
-    modelBuilder.HasAnnotation("Relational:HistoryTableSchema", "public");
-    modelBuilder.HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id");
-    modelBuilder.HasAnnotation("Relational:HistoryTableProductVersionColumnName", "product_version");
-        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        modelBuilder.HasAnnotation("Relational:HistoryTableName", "__EFMigrationsHistory");
+        modelBuilder.HasAnnotation("Relational:HistoryTableSchema", "public");
+        modelBuilder.HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id");
+        modelBuilder.HasAnnotation("Relational:HistoryTableProductVersionColumnName", "product_version");
+        // Use the assembly that defines the DbContext (Infrastructure) to ensure
+        // that model configuration is consistent between design-time (migrations)
+        // and runtime (tests/production). Assembly.GetExecutingAssembly() can
+        // return a different assembly when the context is constructed from tests.
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+        // Always map xmin at runtime (including tests)
+        modelBuilder.ApplyXminConcurrency();
         base.OnModelCreating(modelBuilder);
     }
 }

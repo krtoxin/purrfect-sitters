@@ -37,7 +37,7 @@ public static class BookingApiMappings
             model.CompletedAtUtc,
             model.CancelledAtUtc,
             model.CancellationReason,
-            model.RowVersion,
+            // removed RowVersion,
             history,
             care);
     }

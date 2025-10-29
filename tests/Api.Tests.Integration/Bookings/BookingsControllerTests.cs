@@ -66,12 +66,11 @@ public class BookingsControllerTests : BaseIntegrationTest
         var booking = await getResponse.Content.ReadFromJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
 
+        var dbBookingBefore = await Context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
+        var dbXminBefore = dbBookingBefore != null ? Context.Entry(dbBookingBefore).Property("xmin").CurrentValue : null;
+        Console.WriteLine($"[TEST] Booking before accept (API): {System.Text.Json.JsonSerializer.Serialize(booking)}");
+        Console.WriteLine($"[TEST] Booking before accept (DB): {System.Text.Json.JsonSerializer.Serialize(dbBookingBefore)} xmin={dbXminBefore}");
 
-        Console.WriteLine($"Booking status before accept: {booking!.Status}");
-        Console.WriteLine($"RowVersion before accept: {booking!.RowVersion}");
-        Console.WriteLine("==== BOOKING OBJECT START ====");
-        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(booking));
-        Console.WriteLine("==== BOOKING OBJECT END ====");
         var acceptResponse = await Client.PostAsync($"/api/bookings/{bookingId}/accept", null);
         if (acceptResponse.StatusCode != HttpStatusCode.NoContent)
         {
@@ -88,7 +87,18 @@ public class BookingsControllerTests : BaseIntegrationTest
         getResponse2.StatusCode.Should().Be(HttpStatusCode.OK);
         var updated = await getResponse2.Content.ReadFromJsonAsync<BookingDto>();
         updated.Should().NotBeNull();
-        updated!.Status.Should().Be("Accepted");
+
+        Context.ChangeTracker.Clear();
+        var dbBookingAfter = await Context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.Id == bookingId);
+        var dbXminAfter = dbBookingAfter != null ? Context.Entry(dbBookingAfter).Property("xmin").CurrentValue : null;
+        Console.WriteLine($"[TEST] Booking after accept (API): {System.Text.Json.JsonSerializer.Serialize(updated)}");
+        Console.WriteLine($"[TEST] Booking after accept (DB): {System.Text.Json.JsonSerializer.Serialize(dbBookingAfter)} xmin={dbXminAfter}");
+
+        var dbStatus = dbBookingAfter != null ? dbBookingAfter.Status.ToString() : "<not found>";
+        if (updated!.Status != "Accepted")
+        {
+            throw new Exception($"Booking status after accept (API): {updated.Status}, Booking status after accept (DB): {dbStatus}");
+        }
 
     }
 
