@@ -1,6 +1,8 @@
 using Api.DTOs;
 using Api.Mappings;
 using Application.Pets.Commands.CreatePet;
+using Application.Pets.Commands.UpdatePet;
+using Application.Pets.Commands.DeletePet;
 using Application.Pets.Queries.GetPetById;
 using Application.Pets.Queries.ListPetsForOwner;
 using Application.Pets.Queries;
@@ -20,19 +22,28 @@ public class PetsController : ControllerBase
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<IActionResult> Update(Guid id, [FromBody] UpdatePetDto request, CancellationToken ct)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePetDto request, CancellationToken ct)
     {
-        // TODO: Implement UpdatePetCommand and handler
-        return Task.FromResult<IActionResult>(Ok());
+        var result = await _mediator.Send(new UpdatePetCommand(
+            id,
+            request.Name,
+            string.Empty, 
+            request.Breed ?? string.Empty,
+            request.Notes), ct);
+        if (!result)
+            return NotFound();
+        return Ok();
     }
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        // TODO: Implement DeletePetCommand and handler
-        return Task.FromResult<IActionResult>(NoContent());
+        var result = await _mediator.Send(new DeletePetCommand(id), ct);
+        if (!result)
+            return NotFound();
+        return NoContent();
     }
 
     [HttpPost]

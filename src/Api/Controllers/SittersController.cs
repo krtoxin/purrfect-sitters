@@ -17,22 +17,33 @@ public class SittersController : ControllerBase
 
     public SittersController(IMediator mediator) => _mediator = mediator;
 
+
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<IActionResult> Update(Guid id, [FromBody] UpdateSitterDto request, CancellationToken ct)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSitterDto request, CancellationToken ct)
     {
-        // TODO: Implement UpdateSitterCommand and handler
-        return Task.FromResult<IActionResult>(Ok());
+        var result = await _mediator.Send(new Application.Sitters.Commands.UpdateSitter.UpdateSitterCommand(
+            id,
+            request.Bio,
+            request.BaseRateAmount ?? 0,
+            request.BaseRateCurrency ?? "USD",
+            request.ServicesOffered.Split(',', StringSplitOptions.RemoveEmptyEntries)), ct);
+        if (!result)
+            return NotFound();
+        return Ok();
     }
+
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        // TODO: Implement DeleteSitterCommand and handler
-        return Task.FromResult<IActionResult>(NoContent());
+        var result = await _mediator.Send(new Application.Sitters.Commands.DeleteSitter.DeleteSitterCommand(id), ct);
+        if (!result)
+            return NotFound();
+        return NoContent();
     }
 
     [HttpPost]

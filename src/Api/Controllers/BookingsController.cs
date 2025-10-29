@@ -26,22 +26,35 @@ public class BookingsController : ControllerBase
 
     public BookingsController(IMediator mediator) => _mediator = mediator;
 
+
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<IActionResult> Update(Guid id, [FromBody] UpdateBookingDto request, CancellationToken ct)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBookingDto request, CancellationToken ct)
     {
-        // TODO: Implement UpdateBookingCommand and handler
-        return Task.FromResult<IActionResult>(Ok());
+        var result = await _mediator.Send(new Application.Bookings.Commands.UpdateBooking.UpdateBookingCommand(
+            id,
+            DateTime.UtcNow, 
+            DateTime.UtcNow.AddDays(1),
+            0, 
+            0,
+            "USD",
+            request.CareInstructions.Split(',', StringSplitOptions.RemoveEmptyEntries)), ct);
+        if (!result)
+            return NotFound();
+        return Ok();
     }
+
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        // TODO: Implement DeleteBookingCommand and handler
-        return Task.FromResult<IActionResult>(NoContent());
+        var result = await _mediator.Send(new Application.Bookings.Commands.DeleteBooking.DeleteBookingCommand(id), ct);
+        if (!result)
+            return NotFound();
+        return NoContent();
     }
 
     [HttpPost]

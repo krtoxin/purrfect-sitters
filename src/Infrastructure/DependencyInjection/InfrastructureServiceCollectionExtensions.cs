@@ -9,6 +9,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IPetRepository, PetRepository>();
+        services.AddScoped<ISitterRepository, SitterRepository>();
         services.AddScoped<ISitterProfileRepository, SitterProfileRepository>();
         services.AddScoped<IOwnerProfileRepository, OwnerProfileRepository>();
         services.AddScoped<IUserRepository, UserRepository>();

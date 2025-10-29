@@ -24,13 +24,11 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Ensure the container is started before using its connection string
         if (!_dbContainer.State.Equals(DotNet.Testcontainers.Containers.TestcontainersStates.Running))
         {
             _dbContainer.StartAsync().GetAwaiter().GetResult();
         }
 
-        // Set environment variable to override connection string for all config providers
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", _dbContainer.GetConnectionString());
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
 
@@ -40,13 +38,14 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
             {
                 ["ConnectionStrings:DefaultConnection"] = _dbContainer.GetConnectionString()
             };
-            // Add as first provider so it overrides appsettings.json but can be overridden by env vars
             configBuilder.AddInMemoryCollection(testConfig);
         });
 
         builder.ConfigureTestServices(services =>
         {
-            services.AddSingleton<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
+            RegisterDatabase(services);
+
+           services.AddSingleton<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
         });
     }
 
