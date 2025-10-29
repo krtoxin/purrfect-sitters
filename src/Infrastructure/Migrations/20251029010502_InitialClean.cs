@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCoreModel : Migration
+    public partial class InitialClean : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -102,6 +102,32 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Sitters",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    FirstName = table.Column<string>(type: "text", nullable: false),
+                    LastName = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    email = table.Column<string>(type: "text", nullable: false),
+                    Phone = table.Column<string>(type: "text", nullable: false),
+                    address_line1 = table.Column<string>(type: "text", nullable: false),
+                    address_line2 = table.Column<string>(type: "text", nullable: true),
+                    address_city = table.Column<string>(type: "text", nullable: false),
+                    address_state = table.Column<string>(type: "text", nullable: false),
+                    address_postal_code = table.Column<string>(type: "text", nullable: false),
+                    address_country = table.Column<string>(type: "text", nullable: false),
+                    Bio = table.Column<string>(type: "text", nullable: false),
+                    hourly_rate_amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    hourly_rate_currency = table.Column<string>(type: "text", nullable: false),
+                    IsAvailable = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sitters", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "users",
                 columns: table => new
                 {
@@ -123,9 +149,9 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    booking_id = table.Column<Guid>(type: "uuid", nullable: false),
                     text = table.Column<string>(type: "varchar(400)", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    booking_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -143,9 +169,9 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    booking_id = table.Column<Guid>(type: "uuid", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
-                    changed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    booking_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    changed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -163,10 +189,10 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    owner_profile_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "varchar(150)", nullable: false),
                     phone = table.Column<string>(type: "varchar(60)", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    owner_profile_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -184,11 +210,11 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    pet_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "varchar(200)", nullable: false),
                     severity = table.Column<int>(type: "integer", nullable: false),
                     notes = table.Column<string>(type: "varchar(500)", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    pet_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -206,9 +232,9 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    pet_id = table.Column<Guid>(type: "uuid", nullable: false),
                     text = table.Column<string>(type: "varchar(400)", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    pet_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -226,10 +252,10 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    pet_id = table.Column<Guid>(type: "uuid", nullable: false),
                     title = table.Column<string>(type: "varchar(200)", nullable: false),
                     details = table.Column<string>(type: "varchar(1000)", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    pet_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -247,13 +273,13 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    pet_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "varchar(200)", nullable: false),
                     dosage = table.Column<string>(type: "varchar(150)", nullable: false),
                     schedule = table.Column<string>(type: "varchar(250)", nullable: false),
                     start_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     end_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    pet_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -271,11 +297,11 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    pet_id = table.Column<Guid>(type: "uuid", nullable: false),
                     vaccine_name = table.Column<string>(type: "varchar(200)", nullable: false),
                     administered_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     expires_on_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    pet_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -293,11 +319,11 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sitter_profile_id = table.Column<Guid>(type: "uuid", nullable: false),
                     start_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     end_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
-                    sitter_profile_id = table.Column<Guid>(type: "uuid", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -446,6 +472,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "sitter_availability_slots");
+
+            migrationBuilder.DropTable(
+                name: "Sitters");
 
             migrationBuilder.DropTable(
                 name: "users");

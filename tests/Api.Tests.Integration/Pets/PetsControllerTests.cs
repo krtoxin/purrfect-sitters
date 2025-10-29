@@ -135,7 +135,7 @@ public class PetsControllerTests : BaseIntegrationTest, IAsyncLifetime
     {
         var request = new CreatePetRequest
         {
-            Name = "", // Invalid: empty name
+            Name = "", 
             Type = PetType.Cat
         };
 

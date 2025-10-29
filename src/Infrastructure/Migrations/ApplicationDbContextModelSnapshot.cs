@@ -559,7 +559,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sitters");
+                    b.ToTable("Sitters", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Sitters.SitterProfile", b =>
@@ -688,7 +688,7 @@ namespace Infrastructure.Migrations
 
                             b1.HasKey("BookingId");
 
-                            b1.ToTable("bookings");
+                            b1.ToTable("bookings", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("BookingId");
@@ -763,7 +763,7 @@ namespace Infrastructure.Migrations
 
                             b1.HasKey("OwnerProfileId");
 
-                            b1.ToTable("owner_profiles");
+                            b1.ToTable("owner_profiles", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("OwnerProfileId");
@@ -864,7 +864,7 @@ namespace Infrastructure.Migrations
 
                             b1.HasKey("SitterId");
 
-                            b1.ToTable("Sitters");
+                            b1.ToTable("Sitters", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("SitterId");
@@ -882,7 +882,7 @@ namespace Infrastructure.Migrations
 
                             b1.HasKey("SitterId");
 
-                            b1.ToTable("Sitters");
+                            b1.ToTable("Sitters", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("SitterId");
@@ -904,7 +904,7 @@ namespace Infrastructure.Migrations
 
                             b1.HasKey("SitterId");
 
-                            b1.ToTable("Sitters");
+                            b1.ToTable("Sitters", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("SitterId");
@@ -939,7 +939,7 @@ namespace Infrastructure.Migrations
 
                             b1.HasKey("SitterProfileId");
 
-                            b1.ToTable("sitter_profiles");
+                            b1.ToTable("sitter_profiles", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("SitterProfileId");
@@ -966,7 +966,7 @@ namespace Infrastructure.Migrations
                                 .IsUnique()
                                 .HasDatabaseName("ux_users_email");
 
-                            b1.ToTable("users");
+                            b1.ToTable("users", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("UserId");
