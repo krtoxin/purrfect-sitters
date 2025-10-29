@@ -98,9 +98,9 @@ public class Booking : AggregateRoot
 
     public void Accept()
     {
-    EnsureStatus(BookingStatus.Requested);
-    Transition(BookingStatus.Accepted);
-    Raise(new BookingAcceptedEvent(Id));
+        EnsureStatus(BookingStatus.Requested);
+        Transition(BookingStatus.Accepted); 
+        Raise(new BookingAcceptedEvent(Id));
     }
 
     public void Reject()

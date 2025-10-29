@@ -66,12 +66,19 @@ public class BookingsControllerTests : BaseIntegrationTest
         var booking = await getResponse.Content.ReadFromJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
 
-        var dbBookingBefore = await Context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
+        Context.ChangeTracker.Clear();
+        var dbBookingBefore = await Context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.Id == bookingId);
         var dbXminBefore = dbBookingBefore != null ? Context.Entry(dbBookingBefore).Property("xmin").CurrentValue : null;
         Console.WriteLine($"[TEST] Booking before accept (API): {System.Text.Json.JsonSerializer.Serialize(booking)}");
         Console.WriteLine($"[TEST] Booking before accept (DB): {System.Text.Json.JsonSerializer.Serialize(dbBookingBefore)} xmin={dbXminBefore}");
+        
+        // ASSERT: Перевіряємо, що статус до Accept - Requested
+        booking!.Status.Should().Be("Requested", "Початковий статус бронювання має бути Requested.");
 
-        var acceptResponse = await Client.PostAsync($"/api/bookings/{bookingId}/accept", null);
+        var sitterClient = GetAuthenticatedClient(sitterUser.Id);
+
+        var acceptResponse = await sitterClient.PostAsync($"/api/bookings/{bookingId}/accept", null);
+        
         if (acceptResponse.StatusCode != HttpStatusCode.NoContent)
         {
             var acceptBody = await acceptResponse.Content.ReadAsStringAsync();
@@ -94,12 +101,13 @@ public class BookingsControllerTests : BaseIntegrationTest
         Console.WriteLine($"[TEST] Booking after accept (API): {System.Text.Json.JsonSerializer.Serialize(updated)}");
         Console.WriteLine($"[TEST] Booking after accept (DB): {System.Text.Json.JsonSerializer.Serialize(dbBookingAfter)} xmin={dbXminAfter}");
 
+        // >>> КРИТИЧНЕ ВИПРАВЛЕННЯ: ПЕРЕВІРКА СТАТУСУ (API та DB)
+        updated!.Status.Should().Be("Accepted", "Статус бронювання в API повинен бути 'Accepted' після успішного виклику.");
+        
         var dbStatus = dbBookingAfter != null ? dbBookingAfter.Status.ToString() : "<not found>";
-        if (updated!.Status != "Accepted")
-        {
-            throw new Exception($"Booking status after accept (API): {updated.Status}, Booking status after accept (DB): {dbStatus}");
-        }
+        dbStatus.Should().Be("Accepted", "Статус бронювання в БД повинен бути 'Accepted' після успішного виклику Accept.");
 
+        // Оригінальний throw new Exception() видалено, замінено на FluentAssertions.
     }
 
     [Fact]
@@ -130,4 +138,17 @@ public class BookingsControllerTests : BaseIntegrationTest
         returnedBookings!.Count.Should().Be(3);
         returnedBookings.Should().AllSatisfy(b => b.OwnerId.Should().Be(owner.Id));
     }
+    protected HttpClient CreateClientAs(Guid userId)
+    {
+        var client = Factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User-Id", userId.ToString());
+        return client;
+    }
+    private HttpClient GetAuthenticatedClient(Guid userId)
+    {
+        var client = Factory.CreateClient(); 
+        client.DefaultRequestHeaders.Add("X-Test-User-Id", userId.ToString());
+        return client;
+    }
+    
 }
