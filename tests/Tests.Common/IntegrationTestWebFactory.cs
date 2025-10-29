@@ -13,47 +13,37 @@ using Xunit;
 
 namespace Tests.Common;
 
+
 public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:latest")
-        .WithDatabase("test-purrfect-sitters-database")
-        .WithUsername("postgres")
-        .WithPassword("postgres")
-        .Build();
+    private const string NeonDbConnectionString = "Host=ep-holy-field-agyc3h7m-pooler.c-2.eu-central-1.aws.neon.tech;Port=5432;Database=neondb;Username=neondb_owner;Password=npg_PfWg5hHm1MzZ;SSL Mode=Require;Trust Server Certificate=true";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        if (!_dbContainer.State.Equals(DotNet.Testcontainers.Containers.TestcontainersStates.Running))
-        {
-            _dbContainer.StartAsync().GetAwaiter().GetResult();
-        }
-
-        Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", _dbContainer.GetConnectionString());
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
-
-        builder.ConfigureAppConfiguration((context, configBuilder) =>
-        {
-            var testConfig = new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DefaultConnection"] = _dbContainer.GetConnectionString()
-            };
-            configBuilder.AddInMemoryCollection(testConfig);
-        });
-
+        builder.UseEnvironment("Test");
         builder.ConfigureTestServices(services =>
         {
             RegisterDatabase(services);
-
-           services.AddSingleton<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
+            RegisterTestServices(services);
+        })
+        .ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddJsonFile("appsettings.Test.json");
+            config.AddEnvironmentVariables();
         });
+    }
+
+    private void RegisterTestServices(IServiceCollection services)
+    {
+        services.RemoveServiceByType(typeof(Application.Common.Interfaces.IEmailSendingService));
+        services.AddScoped<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
     }
 
     private void RegisterDatabase(IServiceCollection services)
     {
         services.RemoveServiceByType(typeof(DbContextOptions<ApplicationDbContext>));
 
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(_dbContainer.GetConnectionString());
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(NeonDbConnectionString);
         dataSourceBuilder.EnableDynamicJson();
         var dataSource = dataSourceBuilder.Build();
 
@@ -65,13 +55,8 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
             .ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning)));
     }
 
-    public Task InitializeAsync()
-    {
-        return _dbContainer.StartAsync();
-    }
 
-    public new Task DisposeAsync()
-    {
-        return _dbContainer.DisposeAsync().AsTask();
-    }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public new Task DisposeAsync() => Task.CompletedTask;
 }

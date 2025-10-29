@@ -9,7 +9,11 @@ public static class ConfigureInfrastructureServices
 {
     public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddPersistenceServices(configuration);
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (env != "Test")
+        {
+            services.AddPersistenceServices(configuration);
+        }
         services.AddInfrastructure();
     }
 }

@@ -10,29 +10,32 @@ public static class ConfigurePersistenceServices
 {
     public static void AddPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
-
-        var cs = configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrEmpty(cs))
+        var alreadyRegistered = services.Any(s => s.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+        if (!alreadyRegistered)
         {
-            cs = Environment.GetEnvironmentVariable("TEST_DB_CONNECTION");
+            var cs = configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(cs))
+            {
+                cs = Environment.GetEnvironmentVariable("TEST_DB_CONNECTION");
+            }
+            if (string.IsNullOrEmpty(cs))
+            {
+                throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            }
+
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
+            dataSourceBuilder.EnableDynamicJson();
+            var dataSource = dataSourceBuilder.Build();
+
+            services.AddDbContext<ApplicationDbContext>(options => 
+            {
+                options.UseNpgsql(
+                    dataSource,
+                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+
+                options.ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning));
+            });
         }
-        if (string.IsNullOrEmpty(cs))
-        {
-            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        }
-
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
-        dataSourceBuilder.EnableDynamicJson();
-        var dataSource = dataSourceBuilder.Build();
-
-        services.AddDbContext<ApplicationDbContext>(options => 
-        {
-            options.UseNpgsql(
-                dataSource,
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
-
-            options.ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning));
-        });
 
         services.AddScoped<ApplicationDbContextInitialiser>();
     }
