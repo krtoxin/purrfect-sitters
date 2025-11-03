@@ -147,6 +147,65 @@ public class PetsControllerTests : BaseIntegrationTest, IAsyncLifetime
     }
 
     [Fact]
+    public async Task Update_NonExistingPet_ReturnsNotFound()
+    {
+        var request = new
+        {
+            Name = "Ghost",
+            Breed = "None",
+            Notes = "None"
+        };
+
+        var response = await Client.PutAsJsonAsync($"{BaseRoute}/{Guid.NewGuid()}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Delete_NonExistingPet_ReturnsNotFound()
+    {
+        var response = await Client.DeleteAsync($"{BaseRoute}/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task ListForOwner_ReturnsOnlyOwnersPets()
+    {
+        var ownerA = UserData.CreateUser();
+        var ownerB = UserData.CreateUser();
+        Context.Users.AddRange(ownerA, ownerB);
+        await SaveChangesAsync();
+
+        var petA1 = PetData.FirstPet(ownerA.Id);
+        var petA2 = PetData.SecondPet(ownerA.Id);
+        var petB1 = PetData.ThirdPet(ownerB.Id);
+        Context.Pets.AddRange(petA1, petA2, petB1);
+        await SaveChangesAsync();
+
+        var response = await Client.GetAsync($"{BaseRoute}/owner/{ownerA.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var pets = await response.Content.ReadFromJsonAsync<List<PetDto>>();
+        pets.Should().NotBeNull();
+        pets!.Should().OnlyContain(p => p.OwnerId == ownerA.Id);
+        pets.Count.Should().BeGreaterThanOrEqualTo(2);
+    }
+
+    [Fact]
+    public async Task ListForOwner_NoPets_ReturnsEmpty()
+    {
+        var owner = UserData.CreateUser();
+        Context.Users.Add(owner);
+        await SaveChangesAsync();
+
+        var response = await Client.GetAsync($"{BaseRoute}/owner/{owner.Id}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var pets = await response.Content.ReadFromJsonAsync<List<PetDto>>();
+        pets.Should().NotBeNull();
+        pets!.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ShouldGetPetById()
     {
         if (_firstPet is null)
@@ -176,6 +235,62 @@ public class PetsControllerTests : BaseIntegrationTest, IAsyncLifetime
             OwnerId = Guid.Empty,
             Name = "",
             Type = PetType.Cat.ToString()
+        };
+
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Create_MinimalValidPet_Succeeds()
+    {
+        var owner = UserData.CreateUser();
+        Context.Users.Add(owner);
+        await SaveChangesAsync();
+
+        var request = new
+        {
+            OwnerId = owner.Id,
+            Name = "Pi",
+            Type = PetType.Cat.ToString()
+        };
+
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task Create_NameTooShort_BadRequest()
+    {
+        var owner = UserData.CreateUser();
+        Context.Users.Add(owner);
+        await SaveChangesAsync();
+
+        var request = new
+        {
+            OwnerId = owner.Id,
+            Name = "A",
+            Type = PetType.Cat.ToString()
+        };
+
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Create_NameTooShort_ReturnsBadRequest()
+    {
+        var owner = UserData.CreateUser();
+        Context.Users.Add(owner);
+        await SaveChangesAsync();
+
+        var request = new
+        {
+            OwnerId = owner.Id,
+            Name = "A",
+            Type = PetType.Cat.ToString(),
+            Breed = "B",
+            Notes = "N"
         };
 
         var response = await Client.PostAsJsonAsync(BaseRoute, request);

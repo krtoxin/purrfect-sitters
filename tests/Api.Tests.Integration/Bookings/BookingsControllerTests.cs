@@ -138,6 +138,208 @@ public class BookingsControllerTests : BaseIntegrationTest
         returnedBookings!.Count.Should().Be(3);
         returnedBookings.Should().AllSatisfy(b => b.OwnerId.Should().Be(owner.Id));
     }
+
+    
+    private class PagedBookings
+    {
+        public List<BookingDto> Items { get; set; } = new();
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalCount { get; set; }
+        public int TotalPages { get; set; }
+    }
+
+    [Fact]
+    public async Task ListForOwner_ReturnsPagedResults()
+    {
+        Context.Bookings.RemoveRange(Context.Bookings);
+        Context.Pets.RemoveRange(Context.Pets);
+        Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
+        Context.Users.RemoveRange(Context.Users);
+        await SaveChangesAsync();
+
+        var owner = UserData.CreateUser();
+        var sitterUser = UserData.CreateUser();
+        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
+        var pet = PetData.FirstPet(owner.Id);
+        Context.Users.AddRange(owner, sitterUser);
+        Context.SitterProfiles.Add(sitterProfile);
+        Context.Pets.Add(pet);
+        await SaveChangesAsync();
+
+        var bookings = BookingData.CreateBookings(3, ownerId: owner.Id, sitterProfileId: sitterProfile.Id, petId: pet.Id).ToList();
+        Context.Bookings.AddRange(bookings);
+        await SaveChangesAsync();
+
+        var response = await Client.GetAsync($"/api/bookings/owner/{owner.Id}?page=1&pageSize=2");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var paged = await response.Content.ReadFromJsonAsync<PagedBookings>();
+        paged.Should().NotBeNull();
+        paged!.Items.Count.Should().BeLessThanOrEqualTo(2);
+        paged.Items.Should().OnlyContain(b => b.OwnerId == owner.Id);
+        paged.TotalCount.Should().BeGreaterThanOrEqualTo(3);
+        paged.Page.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ListForOwner_Page2_ReturnsRemaining()
+    {
+        Context.Bookings.RemoveRange(Context.Bookings);
+        Context.Pets.RemoveRange(Context.Pets);
+        Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
+        Context.Users.RemoveRange(Context.Users);
+        await SaveChangesAsync();
+
+        var owner = UserData.CreateUser();
+        var sitterUser = UserData.CreateUser();
+        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
+        var pet = PetData.FirstPet(owner.Id);
+        Context.Users.AddRange(owner, sitterUser);
+        Context.SitterProfiles.Add(sitterProfile);
+        Context.Pets.Add(pet);
+        await SaveChangesAsync();
+
+        var bookings = BookingData.CreateBookings(3, ownerId: owner.Id, sitterProfileId: sitterProfile.Id, petId: pet.Id).ToList();
+        Context.Bookings.AddRange(bookings);
+        await SaveChangesAsync();
+
+        var response = await Client.GetAsync($"/api/bookings/owner/{owner.Id}?page=2&pageSize=2");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var paged = await response.Content.ReadFromJsonAsync<PagedBookings>();
+        paged.Should().NotBeNull();
+        paged!.Items.Count.Should().Be(1);
+        paged.Items.Should().OnlyContain(b => b.OwnerId == owner.Id);
+        paged.Page.Should().Be(2);
+    }
+
+
+    
+
+    [Fact]
+    public async Task ProblemDetails_422_HasCorrelationIdAndContentType()
+    {
+        var badRequest = new
+        {
+            PetId = Guid.Empty,
+            SitterProfileId = Guid.Empty,
+            StartUtc = DateTime.MinValue,
+            EndUtc = DateTime.MinValue,
+            BaseAmount = -1m,
+            ServiceFeePercent = -5m,
+            Currency = "",
+            CareInstructionTexts = Array.Empty<string>()
+        };
+        var response = await Client.PostAsJsonAsync("/api/bookings", badRequest);
+        response.StatusCode.Should().Be((HttpStatusCode)422);
+        response.Content.Headers.ContentType.Should().NotBeNull();
+        response.Content.Headers.ContentType!.MediaType.Should().Contain("json");
+        response.Headers.Contains("X-Correlation-Id").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ListForOwner_PageBeyondTotal_ReturnsEmpty()
+    {
+        Context.Bookings.RemoveRange(Context.Bookings);
+        Context.Pets.RemoveRange(Context.Pets);
+        Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
+        Context.Users.RemoveRange(Context.Users);
+        await SaveChangesAsync();
+
+        var owner = UserData.CreateUser();
+        var sitterUser = UserData.CreateUser();
+        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
+        var pet = PetData.FirstPet(owner.Id);
+        Context.Users.AddRange(owner, sitterUser);
+        Context.SitterProfiles.Add(sitterProfile);
+        Context.Pets.Add(pet);
+        await SaveChangesAsync();
+
+        var bookings = BookingData.CreateBookings(2, ownerId: owner.Id, sitterProfileId: sitterProfile.Id, petId: pet.Id).ToList();
+        Context.Bookings.AddRange(bookings);
+        await SaveChangesAsync();
+
+        var response = await Client.GetAsync($"/api/bookings/owner/{owner.Id}?page=5&pageSize=2");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var paged = await response.Content.ReadFromJsonAsync<PagedBookings>();
+        paged.Should().NotBeNull();
+        paged!.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Create_InvalidBooking_ReturnsUnprocessableEntity()
+    {
+        var badRequest = new
+        {
+            PetId = Guid.Empty,
+            SitterProfileId = Guid.Empty,
+            StartUtc = DateTime.MinValue,
+            EndUtc = DateTime.MinValue,
+            BaseAmount = -1m,
+            ServiceFeePercent = -5m,
+            Currency = "",
+            CareInstructionTexts = Array.Empty<string>()
+        };
+        var response = await Client.PostAsJsonAsync("/api/bookings", badRequest);
+        response.StatusCode.Should().Be((HttpStatusCode)422);
+    }
+
+    [Fact]
+    public async Task Update_NonExistingBooking_ReturnsNotFound()
+    {
+        var response = await Client.PutAsJsonAsync($"/api/bookings/{Guid.NewGuid()}", new { Status = "Accepted" });
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetById_NonExisting_ReturnsNotFound()
+    {
+        var response = await Client.GetAsync($"/api/bookings/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Delete_ExistingBooking_RemovesBooking()
+    {
+        Context.Bookings.RemoveRange(Context.Bookings);
+        await SaveChangesAsync();
+
+        var owner = UserData.CreateUser();
+        var sitterUser = UserData.CreateUser();
+        var sitterProfile = SitterData.CreateSitterProfile(userId: sitterUser.Id);
+        var pet = PetData.FirstPet(owner.Id);
+        Context.Users.AddRange(owner, sitterUser);
+        Context.SitterProfiles.Add(sitterProfile);
+        Context.Pets.Add(pet);
+        await SaveChangesAsync();
+
+        var createRequest = new
+        {
+            PetId = pet.Id,
+            SitterProfileId = sitterProfile.Id,
+            StartUtc = DateTime.UtcNow.AddDays(1),
+            EndUtc = DateTime.UtcNow.AddDays(1).AddHours(1),
+            BaseAmount = 20.0m,
+            ServiceFeePercent = 10.0m,
+            Currency = "USD",
+            CareInstructionTexts = new[] { "Care" }
+        };
+        var createResponse = await Client.PostAsJsonAsync("/api/bookings", createRequest);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var createdObj = await createResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+        var bookingId = Guid.Parse(createdObj!["id"].ToString()!);
+
+        var delResponse = await Client.DeleteAsync($"/api/bookings/{bookingId}");
+        delResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var exists = await Context.Bookings.AnyAsync(b => b.Id == bookingId);
+        exists.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Delete_NonExistingBooking_ReturnsNotFound()
+    {
+        var response = await Client.DeleteAsync($"/api/bookings/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
     protected HttpClient CreateClientAs(Guid userId)
     {
         var client = Factory.CreateClient();

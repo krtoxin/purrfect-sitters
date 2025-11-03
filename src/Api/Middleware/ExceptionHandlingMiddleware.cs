@@ -48,6 +48,20 @@ public class ExceptionHandlingMiddleware
 
             await WriteProblemDetails(context, pd);
         }
+        catch (ArgumentException ex)
+        {
+            _logger.LogInformation(ex, "Argument error. CorrelationId: {CorrelationId}", correlationId);
+
+            var pd = _problemFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Validation Failed",
+                detail: ex.Message);
+
+            pd.Extensions["correlationId"] = correlationId;
+
+            await WriteProblemDetails(context, pd);
+        }
         catch (InvalidOperationException ex)
         {
             _logger.LogInformation(ex, "Invalid operation or resource not found. CorrelationId: {CorrelationId}", correlationId);
