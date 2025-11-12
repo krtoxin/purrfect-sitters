@@ -13,6 +13,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<User> Users { get; init; }
     public DbSet<OwnerProfile> OwnerProfiles { get; init; }
     public DbSet<SitterProfile> SitterProfiles { get; init; }
+    public DbSet<SitterComment> SitterComments { get; init; }
     public DbSet<Pet> Pets { get; init; }
     public DbSet<Booking> Bookings { get; init; }
     public DbSet<Sitter> Sitters { get; init; }
@@ -27,7 +28,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         // that model configuration is consistent between design-time (migrations)
         // and runtime (tests/production). Assembly.GetExecutingAssembly() can
         // return a different assembly when the context is constructed from tests.
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         // Always map xmin at runtime (including tests)
         modelBuilder.ApplyXminConcurrency();
         base.OnModelCreating(modelBuilder);

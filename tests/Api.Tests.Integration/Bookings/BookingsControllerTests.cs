@@ -24,7 +24,7 @@ public class BookingsControllerTests : BaseIntegrationTest
     [Fact]
     public async Task Create_ValidBooking_ReturnsCreatedBooking()
     {
-
+        // Arrange
         Context.Bookings.RemoveRange(Context.Bookings);
         Context.Pets.RemoveRange(Context.Pets);
         Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
@@ -54,14 +54,20 @@ public class BookingsControllerTests : BaseIntegrationTest
             CareInstructionTexts = new[] { "Please take good care of my pet" }
         };
 
-        var createResponse = await Client.PostAsJsonAsync("/api/bookings", createRequest);
+    // Act
+    var createResponse = await Client.PostAsJsonAsync("/api/bookings", createRequest);
+        
+    // Assert
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createdObj = await createResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
         createdObj.Should().NotBeNull();
         var idRaw = createdObj["id"].ToString();
         Guid bookingId = Guid.Parse(idRaw!);
 
+    // Act
         var getResponse = await Client.GetAsync($"/api/bookings/{bookingId}");
+        
+    // Assert
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var booking = await getResponse.Content.ReadFromJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
@@ -72,12 +78,12 @@ public class BookingsControllerTests : BaseIntegrationTest
         Console.WriteLine($"[TEST] Booking before accept (API): {System.Text.Json.JsonSerializer.Serialize(booking)}");
         Console.WriteLine($"[TEST] Booking before accept (DB): {System.Text.Json.JsonSerializer.Serialize(dbBookingBefore)} xmin={dbXminBefore}");
         
-        // ASSERT: Перевіряємо, що статус до Accept - Requested
+        // ASSERT
         booking!.Status.Should().Be("Requested", "Початковий статус бронювання має бути Requested.");
 
-        var sitterClient = GetAuthenticatedClient(sitterUser.Id);
-
-        var acceptResponse = await sitterClient.PostAsync($"/api/bookings/{bookingId}/accept", null);
+    // Act
+    var sitterClient = GetAuthenticatedClient(sitterUser.Id);
+    var acceptResponse = await sitterClient.PostAsync($"/api/bookings/{bookingId}/accept", null);
         
         if (acceptResponse.StatusCode != HttpStatusCode.NoContent)
         {
@@ -88,9 +94,11 @@ public class BookingsControllerTests : BaseIntegrationTest
             Console.WriteLine(string.IsNullOrWhiteSpace(acceptBody) ? "<empty>" : acceptBody);
             Console.WriteLine("==== ACCEPT RESPONSE END ====");
         }
-        acceptResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    // Assert
+    acceptResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var getResponse2 = await Client.GetAsync($"/api/bookings/{bookingId}");
+    // Act
+    var getResponse2 = await Client.GetAsync($"/api/bookings/{bookingId}");
         getResponse2.StatusCode.Should().Be(HttpStatusCode.OK);
         var updated = await getResponse2.Content.ReadFromJsonAsync<BookingDto>();
         updated.Should().NotBeNull();
@@ -101,18 +109,17 @@ public class BookingsControllerTests : BaseIntegrationTest
         Console.WriteLine($"[TEST] Booking after accept (API): {System.Text.Json.JsonSerializer.Serialize(updated)}");
         Console.WriteLine($"[TEST] Booking after accept (DB): {System.Text.Json.JsonSerializer.Serialize(dbBookingAfter)} xmin={dbXminAfter}");
 
-        // >>> КРИТИЧНЕ ВИПРАВЛЕННЯ: ПЕРЕВІРКА СТАТУСУ (API та DB)
-        updated!.Status.Should().Be("Accepted", "Статус бронювання в API повинен бути 'Accepted' після успішного виклику.");
+    // Assert
+    updated!.Status.Should().Be("Accepted", "Статус бронювання в API повинен бути 'Accepted' після успішного виклику.");
         
         var dbStatus = dbBookingAfter != null ? dbBookingAfter.Status.ToString() : "<not found>";
         dbStatus.Should().Be("Accepted", "Статус бронювання в БД повинен бути 'Accepted' після успішного виклику Accept.");
-
-        // Оригінальний throw new Exception() видалено, замінено на FluentAssertions.
     }
 
     [Fact]
     public async Task GetAllBookings_ReturnsBookings()
     {
+        // Arrange
         Context.Bookings.RemoveRange(Context.Bookings);
         Context.Pets.RemoveRange(Context.Pets);
         Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
@@ -130,8 +137,10 @@ public class BookingsControllerTests : BaseIntegrationTest
         Context.Bookings.AddRange(bookings);
         await SaveChangesAsync();
 
+        // Act
         var response = await Client.GetAsync("/api/bookings");
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var returnedBookings = await response.Content.ReadFromJsonAsync<List<BookingDto>>();
         returnedBookings.Should().NotBeNull();
@@ -152,6 +161,7 @@ public class BookingsControllerTests : BaseIntegrationTest
     [Fact]
     public async Task ListForOwner_ReturnsPagedResults()
     {
+        // Arrange
         Context.Bookings.RemoveRange(Context.Bookings);
         Context.Pets.RemoveRange(Context.Pets);
         Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
@@ -171,7 +181,9 @@ public class BookingsControllerTests : BaseIntegrationTest
         Context.Bookings.AddRange(bookings);
         await SaveChangesAsync();
 
+        // Act
         var response = await Client.GetAsync($"/api/bookings/owner/{owner.Id}?page=1&pageSize=2");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var paged = await response.Content.ReadFromJsonAsync<PagedBookings>();
         paged.Should().NotBeNull();
@@ -184,6 +196,7 @@ public class BookingsControllerTests : BaseIntegrationTest
     [Fact]
     public async Task ListForOwner_Page2_ReturnsRemaining()
     {
+        // Arrange
         Context.Bookings.RemoveRange(Context.Bookings);
         Context.Pets.RemoveRange(Context.Pets);
         Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
@@ -203,7 +216,9 @@ public class BookingsControllerTests : BaseIntegrationTest
         Context.Bookings.AddRange(bookings);
         await SaveChangesAsync();
 
+        // Act
         var response = await Client.GetAsync($"/api/bookings/owner/{owner.Id}?page=2&pageSize=2");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var paged = await response.Content.ReadFromJsonAsync<PagedBookings>();
         paged.Should().NotBeNull();
@@ -218,6 +233,7 @@ public class BookingsControllerTests : BaseIntegrationTest
     [Fact]
     public async Task ProblemDetails_422_HasCorrelationIdAndContentType()
     {
+        // Arrange
         var badRequest = new
         {
             PetId = Guid.Empty,
@@ -229,7 +245,9 @@ public class BookingsControllerTests : BaseIntegrationTest
             Currency = "",
             CareInstructionTexts = Array.Empty<string>()
         };
+        // Act
         var response = await Client.PostAsJsonAsync("/api/bookings", badRequest);
+        // Assert
         response.StatusCode.Should().Be((HttpStatusCode)422);
         response.Content.Headers.ContentType.Should().NotBeNull();
         response.Content.Headers.ContentType!.MediaType.Should().Contain("json");
@@ -239,6 +257,7 @@ public class BookingsControllerTests : BaseIntegrationTest
     [Fact]
     public async Task ListForOwner_PageBeyondTotal_ReturnsEmpty()
     {
+        // Arrange
         Context.Bookings.RemoveRange(Context.Bookings);
         Context.Pets.RemoveRange(Context.Pets);
         Context.SitterProfiles.RemoveRange(Context.SitterProfiles);
@@ -258,7 +277,9 @@ public class BookingsControllerTests : BaseIntegrationTest
         Context.Bookings.AddRange(bookings);
         await SaveChangesAsync();
 
+        // Act
         var response = await Client.GetAsync($"/api/bookings/owner/{owner.Id}?page=5&pageSize=2");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var paged = await response.Content.ReadFromJsonAsync<PagedBookings>();
         paged.Should().NotBeNull();
@@ -268,6 +289,7 @@ public class BookingsControllerTests : BaseIntegrationTest
     [Fact]
     public async Task Create_InvalidBooking_ReturnsUnprocessableEntity()
     {
+        // Arrange
         var badRequest = new
         {
             PetId = Guid.Empty,
@@ -279,27 +301,34 @@ public class BookingsControllerTests : BaseIntegrationTest
             Currency = "",
             CareInstructionTexts = Array.Empty<string>()
         };
+        // Act
         var response = await Client.PostAsJsonAsync("/api/bookings", badRequest);
+        // Assert
         response.StatusCode.Should().Be((HttpStatusCode)422);
     }
 
     [Fact]
     public async Task Update_NonExistingBooking_ReturnsNotFound()
     {
+        // Arrange/Act
         var response = await Client.PutAsJsonAsync($"/api/bookings/{Guid.NewGuid()}", new { Status = "Accepted" });
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task GetById_NonExisting_ReturnsNotFound()
     {
+        // Arrange/Act
         var response = await Client.GetAsync($"/api/bookings/{Guid.NewGuid()}");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Delete_ExistingBooking_RemovesBooking()
     {
+        // Arrange
         Context.Bookings.RemoveRange(Context.Bookings);
         await SaveChangesAsync();
 
@@ -323,12 +352,15 @@ public class BookingsControllerTests : BaseIntegrationTest
             Currency = "USD",
             CareInstructionTexts = new[] { "Care" }
         };
+        // Act
         var createResponse = await Client.PostAsJsonAsync("/api/bookings", createRequest);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var createdObj = await createResponse.Content.ReadFromJsonAsync<Dictionary<string, object>>();
         var bookingId = Guid.Parse(createdObj!["id"].ToString()!);
 
+        // Act
         var delResponse = await Client.DeleteAsync($"/api/bookings/{bookingId}");
+        // Assert
         delResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
         var exists = await Context.Bookings.AnyAsync(b => b.Id == bookingId);
         exists.Should().BeFalse();
@@ -337,7 +369,9 @@ public class BookingsControllerTests : BaseIntegrationTest
     [Fact]
     public async Task Delete_NonExistingBooking_ReturnsNotFound()
     {
+        // Arrange/Act
         var response = await Client.DeleteAsync($"/api/bookings/{Guid.NewGuid()}");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
     protected HttpClient CreateClientAs(Guid userId)

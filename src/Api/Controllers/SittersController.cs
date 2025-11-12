@@ -75,6 +75,8 @@ public class SittersController : ControllerBase
         var model = await _mediator.Send(new GetSitterByIdQuery(id), ct);
         if (model is null) return NotFound();
         
+        var comments = await _mediator.Send(new Application.Sitters.Comments.Queries.ListSitterComments.ListSitterCommentsQuery(id), ct);
+
         var sitterDto = new SitterDto
         {
             Id = model.Id,
@@ -87,7 +89,15 @@ public class SittersController : ControllerBase
             ServicesOffered = string.Join(",", model.ServicesOffered.Select(s => s.ToString())),
             CompletedBookings = model.CompletedBookings,
             CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt
+            UpdatedAt = model.UpdatedAt,
+            Comments = comments.Select(c => new SitterCommentDto
+            {
+                Id = c.Id,
+                SitterProfileId = c.SitterProfileId,
+                Content = c.Content,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt
+            }).ToList()
         };
         return Ok(sitterDto);
     }

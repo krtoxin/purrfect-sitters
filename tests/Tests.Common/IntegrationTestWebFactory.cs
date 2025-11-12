@@ -55,6 +55,8 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
         {
             RegisterDatabase(services);
 
+            services.RemoveServiceByType(typeof(ApplicationDbContextInitialiser));
+
             services.AddSingleton<Application.Common.Interfaces.IEmailSendingService, Tests.Common.Services.DummyEmailSendingService>();
 
             var sp = services.BuildServiceProvider();
@@ -68,9 +70,9 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Api.Program>, IAs
                 logger.LogInformation("Resetting test database...");
                 db.Database.EnsureDeletedAsync().GetAwaiter().GetResult();
 
-                logger.LogInformation("Applying EF Core migrations for test schema...");
-                db.Database.MigrateAsync().GetAwaiter().GetResult();
-                logger.LogInformation("Test schema created via migrations.");
+                logger.LogInformation("Creating test schema from model (EnsureCreated)...");
+                db.Database.EnsureCreatedAsync().GetAwaiter().GetResult();
+                logger.LogInformation("Test schema created.");
 
                 logger.LogInformation("Test database ready.");
             }

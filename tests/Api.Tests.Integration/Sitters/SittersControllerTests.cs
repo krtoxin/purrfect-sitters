@@ -46,7 +46,9 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task GetAll_ReturnsSitters()
     {
+        // Act
         var response = await Client.GetAsync(BaseRoute);
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var returned = await response.Content.ReadFromJsonAsync<List<SitterDto>>();
         returned.Should().NotBeNull();
@@ -56,8 +58,11 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task GetById_ExistingSitter_ReturnsSitter()
     {
+        // Arrange
         var sitter = await Context.SitterProfiles.FirstAsync();
+        // Act
         var response = await Client.GetAsync($"{BaseRoute}/{sitter.Id}");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<SitterDto>();
         dto.Should().NotBeNull();
@@ -67,6 +72,7 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task Update_ExistingSitter_UpdatesSitter()
     {
+        // Arrange
         var sitter = await Context.SitterProfiles.FirstAsync();
 
 
@@ -86,8 +92,9 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
         Console.WriteLine(json);
         Console.WriteLine("==== REQUEST JSON END ====");
 
-        var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
-        var response = await Client.PutAsync($"{BaseRoute}/{sitter.Id}", content);
+    var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+    // Act
+    var response = await Client.PutAsync($"{BaseRoute}/{sitter.Id}", content);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -99,20 +106,25 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
             Console.WriteLine("==== SERVER RESPONSE END ====");
         }
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task GetById_NonExisting_ReturnsNotFound()
     {
+        // Arrange/Act
         var response = await Client.GetAsync($"{BaseRoute}/{Guid.NewGuid()}");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task List_WithPageSize_ReturnsLimitedItems()
     {
+        // Act
         var response = await Client.GetAsync($"{BaseRoute}?page=1&pageSize=1");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<List<SitterDto>>();
         list.Should().NotBeNull();
@@ -122,7 +134,9 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task GetAllEndpoint_ReturnsAny()
     {
+        // Act
         var response = await Client.GetAsync($"{BaseRoute}/all");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<List<SitterDto>>();
         list.Should().NotBeNull();
@@ -132,7 +146,9 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task GetAll_ReturnsAllSitters()
     {
+        // Act
         var response = await Client.GetAsync($"{BaseRoute}/all");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<List<SitterDto>>();
         list.Should().NotBeNull();
@@ -142,6 +158,7 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task Update_NonExisting_ReturnsNotFound()
     {
+        // Arrange
         var request = new UpdateSitterDto
         {
             Bio = "x",
@@ -149,14 +166,18 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
             BaseRateCurrency = "USD",
             ServicesOffered = "DayVisit"
         };
+        // Act
         var response = await Client.PutAsJsonAsync($"{BaseRoute}/{Guid.NewGuid()}", request);
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task List_SecondPage_ReturnsItems()
     {
+        // Act
         var response = await Client.GetAsync($"{BaseRoute}?page=2&pageSize=1");
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<List<SitterDto>>();
         list.Should().NotBeNull();
@@ -166,6 +187,7 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task Create_ValidSitter_ReturnsCreated()
     {
+        // Arrange
         var user = UserData.CreateUser();
         Context.Users.Add(user);
         await SaveChangesAsync();
@@ -179,14 +201,17 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
             ServicesOffered = "DayVisit"
         };
 
+        // Act
         var response = await Client.PostAsJsonAsync(BaseRoute, request);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
     [Fact]
     public async Task CreateThenGetById_ReturnsCreatedData()
     {
+        // Arrange
         var user = UserData.CreateUser();
         Context.Users.Add(user);
         await SaveChangesAsync();
@@ -199,13 +224,18 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
             BaseRateCurrency = "USD",
             ServicesOffered = "DayVisit"
         };
-
+        
+        // Act
         var create = await Client.PostAsJsonAsync(BaseRoute, request);
+        
+        // Assert (created)
         create.StatusCode.Should().Be(HttpStatusCode.Created);
         var createdObj = await create.Content.ReadFromJsonAsync<Dictionary<string, object>>();
         var id = Guid.Parse(createdObj!["id"].ToString()!);
 
+        // Act (get by id)
         var get = await Client.GetAsync($"{BaseRoute}/{id}");
+        // Assert (get)
         get.StatusCode.Should().Be(HttpStatusCode.OK);
         var dto = await get.Content.ReadFromJsonAsync<SitterDto>();
         dto.Should().NotBeNull();
@@ -218,6 +248,7 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task Update_InvalidData_ReturnsBadRequest()
     {
+        // Arrange
         var sitter = await Context.SitterProfiles.FirstAsync();
         var request = new UpdateSitterDto
         {
@@ -226,7 +257,9 @@ public class SittersControllerTests : BaseIntegrationTest, IAsyncLifetime
             BaseRateCurrency = "",
             ServicesOffered = ""
         };
+        // Act
         var response = await Client.PutAsJsonAsync($"{BaseRoute}/{sitter.Id}", request);
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }
