@@ -13,7 +13,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<User> Users { get; init; }
     public DbSet<OwnerProfile> OwnerProfiles { get; init; }
     public DbSet<SitterProfile> SitterProfiles { get; init; }
-    public DbSet<SitterComment> SitterComments { get; init; }
+     public DbSet<SitterComment> SitterComments { get; init; }
+    public DbSet<ServiceDiscount> ServiceDiscounts { get; init; }
     public DbSet<Pet> Pets { get; init; }
     public DbSet<Booking> Bookings { get; init; }
     public DbSet<Sitter> Sitters { get; init; }

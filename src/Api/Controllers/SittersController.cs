@@ -5,6 +5,8 @@ using Application.Sitters.Queries.GetSitterById;
 using Application.Sitters.Queries.ListSitters;
 using Application.Sitters.Queries;
 using MediatR;
+using Domain.Sitters;
+using Application.Common.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -100,6 +102,30 @@ public class SittersController : ControllerBase
             }).ToList()
         };
         return Ok(sitterDto);
+    }
+    
+    [HttpGet("{id:guid}/price")]
+    public async Task<ActionResult<object>> GetDiscountedPrice(Guid id, [FromQuery] string category)
+    {
+        var model = await _mediator.Send(new GetSitterByIdQuery(id));
+        if (model is null) return NotFound();
+        if (!Enum.TryParse<SitterServiceType>(category, true, out var cat))
+            return Problem("Invalid category", statusCode: 422);
+
+        if (string.IsNullOrWhiteSpace(model.BaseRateCurrency))
+            return Ok(new { baseRate = (decimal?)null, discounted = (decimal?)null, currency = model.BaseRateCurrency });
+
+        var discountsRepo = HttpContext.RequestServices.GetRequiredService<IServiceDiscountRepository>();
+        var active = await discountsRepo.ListActiveByCategoryAsync(cat, DateTime.UtcNow);
+        var best = active.FirstOrDefault();
+    var baseAmount = model.BaseRateAmount;
+        decimal discounted = baseAmount;
+        if (best != null)
+        {
+            discounted = Math.Round(baseAmount * (100 - best.Percentage) / 100m, 2);
+        }
+
+        return Ok(new { baseRate = baseAmount, discounted, currency = model.BaseRateCurrency, appliedPercentage = best?.Percentage });
     }
 
     [HttpGet]

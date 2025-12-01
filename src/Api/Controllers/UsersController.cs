@@ -70,11 +70,17 @@ public class UsersController : ControllerBase
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto request, CancellationToken ct)
     {
         var command = new Application.Users.Commands.UpdateUser.UpdateUserCommand(id, request.Name, request.IsActive);
         var result = await _mediator.Send(command, ct);
-        if (!result) return NotFound();
+        if (!result.IsSuccess)
+        {
+            if (string.Equals(result.Error, "User not found", StringComparison.OrdinalIgnoreCase))
+                return NotFound();
+            return Problem(result.Error ?? "Update failed", statusCode: 422);
+        }
         var updatedUser = await _mediator.Send(new Application.Users.Queries.GetUserById.GetUserByIdQuery(id), ct);
         if (updatedUser is null) return NotFound();
         var userDto = new UserDto
