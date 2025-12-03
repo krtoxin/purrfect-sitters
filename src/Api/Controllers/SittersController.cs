@@ -25,7 +25,6 @@ public class SittersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSitterDto request, CancellationToken ct)
     {
-        // Defensive: ensure required fields and valid services (string only)
         if (string.IsNullOrWhiteSpace(request.Bio) || request.BaseRateAmount is null || string.IsNullOrWhiteSpace(request.BaseRateCurrency) || string.IsNullOrWhiteSpace(request.ServicesOffered))
             return BadRequest();
         var services = request.ServicesOffered.Split(',', StringSplitOptions.RemoveEmptyEntries);

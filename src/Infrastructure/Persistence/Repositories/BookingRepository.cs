@@ -20,7 +20,6 @@ public class BookingRepository : IBookingRepository
             .Include(b => b.CareInstructionSnapshots)
             .FirstOrDefaultAsync(b => b.Id == id, ct);
 
-    // IMPORTANT: Do not call SaveChanges here — UnitOfWork is responsible for committing.
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
     await _db.Bookings.AddAsync(booking, ct);
@@ -83,44 +82,35 @@ public class BookingRepository : IBookingRepository
         
         if (entry.State != EntityState.Detached)
         {
-            // Save the original Status value before detach/Update overwrites the snapshot
             var statusProp = entry.Property("Status");
             var originalStatus = statusProp != null ? (BookingStatus)statusProp.OriginalValue! : currentStatus;
             
-            // If status changed, use direct SQL update to ensure it's persisted
-            // This is necessary because EF Core has trouble tracking private setter changes
             if (originalStatus != currentStatus)
             {
-                // Use direct SQL to update status, ensuring the change is persisted
                 var statusInt = (int)currentStatus;
                 await _db.Database.ExecuteSqlRawAsync(
                     "UPDATE bookings SET status = {0}, updated_at = timezone('utc', now()) WHERE id = {1}",
                     statusInt, booking.Id);
                 
-                // Then update other properties normally
                 entry.State = EntityState.Detached;
                 _db.Bookings.Update(booking);
                 
-                // Mark entity as modified, but exclude Status since we already updated it via SQL
                 var newEntry = _db.Entry(booking);
                 newEntry.State = EntityState.Modified;
                 var newStatusProp = newEntry.Property("Status");
                 if (newStatusProp != null)
                 {
-                    // Status already updated via SQL, mark as not modified
                     newStatusProp.IsModified = false;
                 }
             }
             else
             {
-                // Status didn't change, just update normally
                 entry.State = EntityState.Detached;
                 _db.Bookings.Update(booking);
             }
         }
         else
         {
-            // For already detached entities, Update() marks all as modified
             _db.Bookings.Update(booking);
         }
         

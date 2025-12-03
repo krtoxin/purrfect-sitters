@@ -131,7 +131,7 @@ public static class DtoMappings
         return Domain.Bookings.Booking.Create(
             Guid.NewGuid(),
             dto.PetId,
-            Guid.Empty, // OwnerId not present in CreateBookingDto
+            Guid.Empty, 
             dto.SitterProfileId,
             dto.StartUtc,
             dto.EndUtc,

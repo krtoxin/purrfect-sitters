@@ -53,7 +53,6 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .HasColumnName("is_reviewed")
             .HasDefaultValue(false);
 
-        // Do NOT map xmin here. It will be mapped at runtime only via extension method.
 
         builder.OwnsOne(x => x.Price, b =>
         {

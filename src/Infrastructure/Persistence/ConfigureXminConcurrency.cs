@@ -14,7 +14,6 @@ public static class ConfigureXminConcurrency
     }
     public static void ApplyXminConcurrency(this ModelBuilder modelBuilder)
     {
-        // Only map xmin for Booking at runtime
         modelBuilder.Entity<Domain.Bookings.Booking>(b => b.MapXminConcurrency());
     }
 }
