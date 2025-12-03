@@ -37,7 +37,6 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBookingDto request, CancellationToken ct)
     {
-        // If a status change requested, use dedicated commands (no row-version passed from controller).
         if (!string.IsNullOrWhiteSpace(request.Status))
         {
             if (string.Equals(request.Status, "Accepted", StringComparison.OrdinalIgnoreCase))
@@ -49,13 +48,11 @@ public class BookingsController : ControllerBase
                 await _mediator.Send(new CompleteBookingCommand(id), ct);
             }
 
-            // Re-fetch after status change to ensure latest state
             var afterStatus = await _mediator.Send(new GetBookingByIdQuery(id), ct);
             if (afterStatus is null) return NotFound();
             return Ok(afterStatus.ToResponse());
         }
 
-        // No status change — partial update: preserve existing times/price and update care instructions
         var current = await _mediator.Send(new GetBookingByIdQuery(id), ct);
         if (current is null) return NotFound();
 
@@ -149,9 +146,7 @@ public class BookingsController : ControllerBase
         var model = await _mediator.Send(new GetBookingByIdQuery(id), ct);
         if (model is null) return NotFound();
 
-        // Don't pass row-version bytes from controller; handler handles concurrency.
         await _mediator.Send(new AcceptBookingCommand(id), ct);
-        // Re-fetch after status change to ensure latest state (for persistence, not for response)
         var afterStatus = await _mediator.Send(new GetBookingByIdQuery(id), ct);
         if (afterStatus is null) return NotFound();
         return NoContent();
@@ -166,7 +161,6 @@ public class BookingsController : ControllerBase
         if (model is null) return NotFound();
 
         await _mediator.Send(new CompleteBookingCommand(id), ct);
-        // Re-fetch after status change to ensure latest state (for persistence, not for response)
         var afterStatus = await _mediator.Send(new GetBookingByIdQuery(id), ct);
         if (afterStatus is null) return NotFound();
         return NoContent();

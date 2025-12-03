@@ -1,9 +1,10 @@
 using Application.Common.Interfaces;
+using Domain.Common;
 using MediatR;
 
 namespace Application.Users.Commands.UpdateUser;
 
-public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
+public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Result>
 {
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _uow;
@@ -13,10 +14,10 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
         _uow = uow;
     }
 
-    public async Task<bool> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _users.GetByIdAsync(request.Id, cancellationToken);
-        if (user is null) return false;
+        if (user is null) return Result.Failure("User not found");
         user.Rename(request.Name);
         if (user.IsActive != request.IsActive)
         {
@@ -24,6 +25,6 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
             else user.Deactivate();
         }
         await _uow.SaveChangesAsync(cancellationToken);
-        return true;
+        return Result.Success();
     }
 }

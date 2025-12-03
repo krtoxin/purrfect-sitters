@@ -89,6 +89,12 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id")
                         .HasName("pk_bookings");
 
@@ -529,6 +535,58 @@ namespace Infrastructure.Migrations
                     b.ToTable("sitter_availability_slots", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Sitters.Service", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_services");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ux_services_name");
+
+                    b.ToTable("services", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Sitters.ServiceDiscount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer")
+                        .HasColumnName("category");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<decimal>("Percentage")
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("percentage");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category", "ExpiresAt");
+
+                    b.ToTable("service_discounts", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Sitters.Sitter", b =>
                 {
                     b.Property<Guid>("Id")
@@ -561,6 +619,38 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Sitters");
+                });
+
+            modelBuilder.Entity("Domain.Sitters.SitterComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("SitterProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sitter_profile_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sitter_comments");
+
+                    b.HasIndex("SitterProfileId")
+                        .HasDatabaseName("ix_sitter_comments_sitter_profile_id");
+
+                    b.ToTable("sitter_comments", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Sitters.SitterProfile", b =>
@@ -617,6 +707,66 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("ix_sitter_profiles_user_id");
 
                     b.ToTable("sitter_profiles", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Sitters.SitterProfilePhoto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.Property<Guid>("SitterProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sitter_profile_id");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("varchar(512)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sitter_profile_photos");
+
+                    b.HasIndex("SitterProfileId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_sitter_profile_photos_sitter_profile_id");
+
+                    b.ToTable("sitter_profile_photos", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Sitters.SitterProfileService", b =>
+                {
+                    b.Property<Guid>("SitterProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sitter_profile_id");
+
+                    b.Property<Guid>("ServiceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("timezone('utc', now())");
+
+                    b.HasKey("SitterProfileId", "ServiceId")
+                        .HasName("pk_sitter_profile_services");
+
+                    b.HasIndex("ServiceId")
+                        .HasDatabaseName("ix_sitter_profile_services_service_id");
+
+                    b.HasIndex("SitterProfileId")
+                        .HasDatabaseName("ix_sitter_profile_services_sitter_profile_id");
+
+                    b.ToTable("sitter_profile_services", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Users.User", b =>
@@ -923,6 +1073,16 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.Sitters.SitterComment", b =>
+                {
+                    b.HasOne("Domain.Sitters.SitterProfile", null)
+                        .WithMany()
+                        .HasForeignKey("SitterProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sitter_comments_sitter_profiles");
+                });
+
             modelBuilder.Entity("Domain.Sitters.SitterProfile", b =>
                 {
                     b.OwnsOne("Domain.ValueObjects.Money", "BaseRate", b1 =>
@@ -949,6 +1109,33 @@ namespace Infrastructure.Migrations
                         });
 
                     b.Navigation("BaseRate");
+                });
+
+            modelBuilder.Entity("Domain.Sitters.SitterProfilePhoto", b =>
+                {
+                    b.HasOne("Domain.Sitters.SitterProfile", null)
+                        .WithOne()
+                        .HasForeignKey("Domain.Sitters.SitterProfilePhoto", "SitterProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sitter_profile_photos_sitter_profiles");
+                });
+
+            modelBuilder.Entity("Domain.Sitters.SitterProfileService", b =>
+                {
+                    b.HasOne("Domain.Sitters.Service", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sitter_profile_services_services");
+
+                    b.HasOne("Domain.Sitters.SitterProfile", null)
+                        .WithMany()
+                        .HasForeignKey("SitterProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sitter_profile_services_sitter_profiles");
                 });
 
             modelBuilder.Entity("Domain.Users.User", b =>

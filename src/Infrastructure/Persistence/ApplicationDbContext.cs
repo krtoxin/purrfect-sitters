@@ -13,6 +13,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<User> Users { get; init; }
     public DbSet<OwnerProfile> OwnerProfiles { get; init; }
     public DbSet<SitterProfile> SitterProfiles { get; init; }
+     public DbSet<SitterComment> SitterComments { get; init; }
+    public DbSet<ServiceDiscount> ServiceDiscounts { get; init; }
     public DbSet<Pet> Pets { get; init; }
     public DbSet<Booking> Bookings { get; init; }
     public DbSet<Sitter> Sitters { get; init; }
@@ -23,12 +25,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.HasAnnotation("Relational:HistoryTableSchema", "public");
         modelBuilder.HasAnnotation("Relational:HistoryTableMigrationIdColumnName", "migration_id");
         modelBuilder.HasAnnotation("Relational:HistoryTableProductVersionColumnName", "product_version");
-        // Use the assembly that defines the DbContext (Infrastructure) to ensure
-        // that model configuration is consistent between design-time (migrations)
-        // and runtime (tests/production). Assembly.GetExecutingAssembly() can
-        // return a different assembly when the context is constructed from tests.
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
-        // Always map xmin at runtime (including tests)
+   
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
         modelBuilder.ApplyXminConcurrency();
         base.OnModelCreating(modelBuilder);
     }

@@ -17,6 +17,7 @@ public class SitterDto
     public int CompletedBookings { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public List<SitterCommentDto>? Comments { get; set; }
 }
 
 public class CreateSitterDto

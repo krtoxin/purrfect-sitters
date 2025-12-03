@@ -3,9 +3,8 @@ using Application;
 using Infrastructure;
 using Api.Setup;
 using DotNetEnv;
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Http;
+using Api.Middleware;
 
 Env.Load();
 
@@ -40,29 +39,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test"))
     app.UseSwaggerUI();
 }
 
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        var logger = context.RequestServices.GetService<ILogger<Program>>() ?? app.Logger;
-        logger.LogError(ex, "Unhandled exception in request pipeline");
-
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/json";
-
-        var payload = new
-        {
-            error = ex.Message,
-            details = ex.ToString()
-        };
-
-        await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
-    }
-});
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseCors();
 

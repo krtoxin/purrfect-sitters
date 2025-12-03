@@ -10,9 +10,11 @@ public abstract class BaseIntegrationTest : IClassFixture<IntegrationTestWebFact
 {
     protected readonly ApplicationDbContext Context;
     protected readonly HttpClient Client;
+    protected readonly IntegrationTestWebFactory Factory;
 
     protected BaseIntegrationTest(IntegrationTestWebFactory factory)
     {
+        Factory = factory;
         var scope = factory.Services.CreateScope();
         Context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Client = factory.CreateClient();

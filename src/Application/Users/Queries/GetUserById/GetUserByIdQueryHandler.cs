@@ -26,6 +26,9 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserRea
             user.Name,
             new[] { user.Roles },
             user.CreatedAt,
-            user.UpdatedAt ?? user.CreatedAt);
+            user.UpdatedAt ?? user.CreatedAt)
+        {
+            IsActive = user.IsActive
+        };
     }
 }

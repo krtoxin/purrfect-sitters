@@ -20,7 +20,6 @@ public class BookingRepository : IBookingRepository
             .Include(b => b.CareInstructionSnapshots)
             .FirstOrDefaultAsync(b => b.Id == id, ct);
 
-    // IMPORTANT: Do not call SaveChanges here — UnitOfWork is responsible for committing.
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
     await _db.Bookings.AddAsync(booking, ct);
@@ -78,7 +77,43 @@ public class BookingRepository : IBookingRepository
 
     public async Task UpdateAsync(Booking booking, CancellationToken ct = default)
     {
-        // No-op: If the entity is tracked, EF Core will persist changes automatically.
+        var entry = _db.Entry(booking);
+        var currentStatus = booking.Status;
+        
+        if (entry.State != EntityState.Detached)
+        {
+            var statusProp = entry.Property("Status");
+            var originalStatus = statusProp != null ? (BookingStatus)statusProp.OriginalValue! : currentStatus;
+            
+            if (originalStatus != currentStatus)
+            {
+                var statusInt = (int)currentStatus;
+                await _db.Database.ExecuteSqlRawAsync(
+                    "UPDATE bookings SET status = {0}, updated_at = timezone('utc', now()) WHERE id = {1}",
+                    statusInt, booking.Id);
+                
+                entry.State = EntityState.Detached;
+                _db.Bookings.Update(booking);
+                
+                var newEntry = _db.Entry(booking);
+                newEntry.State = EntityState.Modified;
+                var newStatusProp = newEntry.Property("Status");
+                if (newStatusProp != null)
+                {
+                    newStatusProp.IsModified = false;
+                }
+            }
+            else
+            {
+                entry.State = EntityState.Detached;
+                _db.Bookings.Update(booking);
+            }
+        }
+        else
+        {
+            _db.Bookings.Update(booking);
+        }
+        
         await Task.CompletedTask;
     }
 

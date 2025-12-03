@@ -5,6 +5,8 @@ using Application.Sitters.Queries.GetSitterById;
 using Application.Sitters.Queries.ListSitters;
 using Application.Sitters.Queries;
 using MediatR;
+using Domain.Sitters;
+using Application.Common.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -23,7 +25,6 @@ public class SittersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSitterDto request, CancellationToken ct)
     {
-        // Defensive: ensure required fields and valid services (string only)
         if (string.IsNullOrWhiteSpace(request.Bio) || request.BaseRateAmount is null || string.IsNullOrWhiteSpace(request.BaseRateCurrency) || string.IsNullOrWhiteSpace(request.ServicesOffered))
             return BadRequest();
         var services = request.ServicesOffered.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -75,6 +76,8 @@ public class SittersController : ControllerBase
         var model = await _mediator.Send(new GetSitterByIdQuery(id), ct);
         if (model is null) return NotFound();
         
+        var comments = await _mediator.Send(new Application.Sitters.Comments.Queries.ListSitterComments.ListSitterCommentsQuery(id), ct);
+
         var sitterDto = new SitterDto
         {
             Id = model.Id,
@@ -87,9 +90,41 @@ public class SittersController : ControllerBase
             ServicesOffered = string.Join(",", model.ServicesOffered.Select(s => s.ToString())),
             CompletedBookings = model.CompletedBookings,
             CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt
+            UpdatedAt = model.UpdatedAt,
+            Comments = comments.Select(c => new SitterCommentDto
+            {
+                Id = c.Id,
+                SitterProfileId = c.SitterProfileId,
+                Content = c.Content,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt
+            }).ToList()
         };
         return Ok(sitterDto);
+    }
+    
+    [HttpGet("{id:guid}/price")]
+    public async Task<ActionResult<object>> GetDiscountedPrice(Guid id, [FromQuery] string category)
+    {
+        var model = await _mediator.Send(new GetSitterByIdQuery(id));
+        if (model is null) return NotFound();
+        if (!Enum.TryParse<SitterServiceType>(category, true, out var cat))
+            return Problem("Invalid category", statusCode: 422);
+
+        if (string.IsNullOrWhiteSpace(model.BaseRateCurrency))
+            return Ok(new { baseRate = (decimal?)null, discounted = (decimal?)null, currency = model.BaseRateCurrency });
+
+        var discountsRepo = HttpContext.RequestServices.GetRequiredService<IServiceDiscountRepository>();
+        var active = await discountsRepo.ListActiveByCategoryAsync(cat, DateTime.UtcNow);
+        var best = active.FirstOrDefault();
+    var baseAmount = model.BaseRateAmount;
+        decimal discounted = baseAmount;
+        if (best != null)
+        {
+            discounted = Math.Round(baseAmount * (100 - best.Percentage) / 100m, 2);
+        }
+
+        return Ok(new { baseRate = baseAmount, discounted, currency = model.BaseRateCurrency, appliedPercentage = best?.Percentage });
     }
 
     [HttpGet]
